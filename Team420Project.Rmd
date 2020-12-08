@@ -90,12 +90,7 @@ predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & pre
 ```{r}
 #nrow(predictors)
 final_table = predictors[predictors$Hillary != 0, ]
+final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 (final_table)
 ```
 
-
-```{r}
-dropped <- "area_name"
-final_table <- final_table[, ! names(final_table) %in% dropped, drop = F]
-final_table
-```
