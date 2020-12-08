@@ -1,0 +1,101 @@
+Appendix:
+
+```{r}
+data = read.csv("C:/Users/yorub/OneDrive/Documents/GitHub/Stat-420-Final-Project/county_facts.csv", stringsAsFactors = FALSE)
+results = read.csv("C:/Users/yorub/OneDrive/Documents/GitHub/Stat-420-Final-Project/primary_results.csv", stringsAsFactors = FALSE)
+library(stringr)
+```
+
+```{r}
+head(data)
+
+```
+
+
+
+```{r}
+head(data, 1)[3] == ""
+```
+
+```{r}
+data$state_abbreviation[4]
+```
+
+
+```{r}
+results[results$candidate == "Hillary Clinton", ]
+```
+
+```{r}
+data[data$state_abbreviation != "", ]
+
+predictors = data[data$state_abbreviation != "", ]
+```
+
+```{r}
+for (i in 1:nrow(predictors)) { 
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " County", "")
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " Parish", "")
+  #print(predictors$area_name[i])
+}
+
+#predictors$area_name[1]
+```
+
+
+```{r}
+predictors$area_name[1]
+```
+
+```{r}
+for (i in 1:nrow(predictors)) {
+  state = predictors$state_abbreviation[i]
+  fips = predictors$fips[i]
+  frac_vote = results[results$state_abbreviation == state & results$fips == fips & results$candidate == "Hillary Clinton",]$fraction_votes
+  #print(frac_vote)
+  if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(state)
+    #print(fips)
+  } else {
+    predictors$Hillary[i] = frac_vote
+  }
+  county = predictors$area_name[i]
+  frac_vote = results[results$county == county & results$candidate == "Hillary Clinton",]$fraction_votes
+  if (predictors$Hillary[i] == 0) {
+    if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(county)
+    } else {
+    predictors$Hillary[i] = frac_vote
+    }
+  }
+}
+
+head(predictors, 2)
+```
+
+```{r}
+temp = results[results$state_abbreviation == "AL" & results$fips == 1001 & results$candidate == "Hillary Clinton",]$fraction_votes
+
+predictors[predictors$state_abbreviation == "VT",]
+```
+```{r}
+predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & predictors$state_abbreviation != 'KS' & predictors$state_abbreviation != 'MN' & predictors$state_abbreviation != 'ME'& predictors$state_abbreviation != 'ND', ]
+
+```
+
+166 incorrect rows out of 3143 so maybe just drop all of those.
+
+**Final Dataframe**
+
+```{r}
+#nrow(predictors)
+final_table = predictors[predictors$Hillary != 0, ]
+(final_table)
+```
+
+
+```{r}
+dropped <- "area_name"
+final_table <- final_table[, ! names(final_table) %in% dropped, drop = F]
+final_table
+```
