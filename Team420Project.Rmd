@@ -1,14 +1,35 @@
-Appendix:
+---
+title: 'Team 420 Final Project'
+author: "Ruben Verghese, Simer Singh, Gautam Ajjarapu, James Wei"
+date: 'December 14, 2020'
+output:
+  html_document:
+    theme: readable
+    toc: yes
+---
+
+# Introduction
+
+
+# Methods
+
+
+# Results
+
+
+# Discussion
+
+
+# Appendix
 
 ```{r}
-data = read.csv("C:/Users/yorub/OneDrive/Documents/GitHub/Stat-420-Final-Project/county_facts.csv", stringsAsFactors = FALSE)
-results = read.csv("C:/Users/yorub/OneDrive/Documents/GitHub/Stat-420-Final-Project/primary_results.csv", stringsAsFactors = FALSE)
+data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
+results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
 library(stringr)
 ```
 
 ```{r}
 head(data)
-
 ```
 
 
@@ -91,6 +112,7 @@ predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & pre
 #nrow(predictors)
 final_table = predictors[predictors$Hillary != 0, ]
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
-(final_table)
+final_table$Hillary <- final_table$Hillary * 100 #convert to percent
+final_table
 ```
 
