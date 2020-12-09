@@ -15,65 +15,137 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 
 
 # Methods
-```{r}
+```{r, warning=FALSE}
 library(corrplot)
-pruned_data = final_table[,-c(1:3)] # without location data
-corrplot(cor(pruned_data), tl.cex = 0.5)
+pruned_data = final_table[,-c(1:2)] # without location data
+pruned_data <- pruned_data[c(-319),]
+#corrplot(cor(pruned_data), tl.cex = 0.5)
 ```
+
+
+# Paramaterization
+```{r}
+pruned_data$v0 = 1 * as.numeric(pruned_data$state_abbreviation == "AK")
+pruned_data$v1 = 1 * as.numeric(pruned_data$state_abbreviation == "AL")
+pruned_data$v2 = 1 * as.numeric(pruned_data$state_abbreviation == "AR")
+pruned_data$v3 = 1 * as.numeric(pruned_data$state_abbreviation == "AZ")
+pruned_data$v4 = 1 * as.numeric(pruned_data$state_abbreviation == "CA")
+pruned_data$v5 = 1 * as.numeric(pruned_data$state_abbreviation == "CO")
+pruned_data$v6 = 1 * as.numeric(pruned_data$state_abbreviation == "CT")
+pruned_data$v7 = 1 * as.numeric(pruned_data$state_abbreviation == "DC")
+pruned_data$v8 = 1 * as.numeric(pruned_data$state_abbreviation == "DE")
+pruned_data$v9 = 1 * as.numeric(pruned_data$state_abbreviation == "FL")
+pruned_data$v10 = 1 * as.numeric(pruned_data$state_abbreviation == "GA")
+pruned_data$v11 = 1 * as.numeric(pruned_data$state_abbreviation == "HI")
+pruned_data$v12 = 1 * as.numeric(pruned_data$state_abbreviation == "IA")
+pruned_data$v13 = 1 * as.numeric(pruned_data$state_abbreviation == "ID")
+pruned_data$v14 = 1 * as.numeric(pruned_data$state_abbreviation == "IL")
+pruned_data$v15 = 1 * as.numeric(pruned_data$state_abbreviation == "IN")
+pruned_data$v16 = 1 * as.numeric(pruned_data$state_abbreviation == "KS")
+pruned_data$v17 = 1 * as.numeric(pruned_data$state_abbreviation == "KY")
+pruned_data$v18 = 1 * as.numeric(pruned_data$state_abbreviation == "LA")
+pruned_data$v19 = 1 * as.numeric(pruned_data$state_abbreviation == "MA")
+pruned_data$v20 = 1 * as.numeric(pruned_data$state_abbreviation == "MD")
+pruned_data$v21 = 1 * as.numeric(pruned_data$state_abbreviation == "ME")
+pruned_data$v22 = 1 * as.numeric(pruned_data$state_abbreviation == "MI")
+pruned_data$v23 = 1 * as.numeric(pruned_data$state_abbreviation == "MN")
+pruned_data$v24 = 1 * as.numeric(pruned_data$state_abbreviation == "MO")
+pruned_data$v25 = 1 * as.numeric(pruned_data$state_abbreviation == "MS")
+pruned_data$v26 = 1 * as.numeric(pruned_data$state_abbreviation == "MT")
+pruned_data$v27 = 1 * as.numeric(pruned_data$state_abbreviation == "NC")
+pruned_data$v28 = 1 * as.numeric(pruned_data$state_abbreviation == "ND")
+pruned_data$v29 = 1 * as.numeric(pruned_data$state_abbreviation == "NE")
+pruned_data$v30 = 1 * as.numeric(pruned_data$state_abbreviation == "NH")
+pruned_data$v31 = 1 * as.numeric(pruned_data$state_abbreviation == "NJ")
+pruned_data$v32 = 1 * as.numeric(pruned_data$state_abbreviation == "NM")
+pruned_data$v33 = 1 * as.numeric(pruned_data$state_abbreviation == "NV")
+pruned_data$v34 = 1 * as.numeric(pruned_data$state_abbreviation == "NY")
+pruned_data$v35 = 1 * as.numeric(pruned_data$state_abbreviation == "OH")
+pruned_data$v36 = 1 * as.numeric(pruned_data$state_abbreviation == "OK")
+pruned_data$v37 = 1 * as.numeric(pruned_data$state_abbreviation == "OR")
+pruned_data$v38 = 1 * as.numeric(pruned_data$state_abbreviation == "PA")
+pruned_data$v39 = 1 * as.numeric(pruned_data$state_abbreviation == "RI")
+pruned_data$v40 = 1 * as.numeric(pruned_data$state_abbreviation == "SC")
+pruned_data$v41 = 1 * as.numeric(pruned_data$state_abbreviation == "SD")
+pruned_data$v42 = 1 * as.numeric(pruned_data$state_abbreviation == "TN")
+pruned_data$v43 = 1 * as.numeric(pruned_data$state_abbreviation == "TX")
+pruned_data$v44 = 1 * as.numeric(pruned_data$state_abbreviation == "UT")
+pruned_data$v45 = 1 * as.numeric(pruned_data$state_abbreviation == "VA")
+pruned_data$v46 = 1 * as.numeric(pruned_data$state_abbreviation == "VT")
+pruned_data$v47 = 1 * as.numeric(pruned_data$state_abbreviation == "WA")
+pruned_data$v48 = 1 * as.numeric(pruned_data$state_abbreviation == "WI")
+pruned_data$v49 = 1 * as.numeric(pruned_data$state_abbreviation == "WV")
+pruned_data$v50 = 1 * as.numeric(pruned_data$state_abbreviation == "WY")
+```
+
+
 
 # Additive Models
 
 ```{r}
 model = lm(Hillary ~ ., data=pruned_data)
-model_back_aic = step(new_model, direction="backward", k=2, trace=0)
-summary(model)$r.squared
-summary(model_back_aic)$r.squared
+
+n = length(coef(model))
+model_back_aic = step(model, direction="backward", k=2, trace=0)
+model_back_bic = step(model, direction="backward", k=log(n), trace=0)
 #vif(model)
 #which(vif(model) > 5)
 ```
 
 ```{r}
-#new_model = lm(Hillary ~ PST040210 +PST120214+AGE775214+SEX255214+RHI525214+RHI625214+POP715213+EDU635213+LFE305213+HSG445213+HSG495213+HSD310213+BZA115213+SBO315207+SBO115207+SBO515207+SBO415207+SBO015207+RTN131207+LND110210+POP060210, data=pruned_data)
-new_model = lm(Hillary ~ AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207, data=pruned_data) # contains all the percent data
-summary(new_model)$r.squared
+summary(model)$r.squared
+summary(model_back_aic)$r.squared
+summary(model_back_bic)$r.squared
+
+length(coef(model))
+length(coef(model_back_aic))
+length(coef(model_back_bic))
 ```
 
-```{r}
-anova(new_model, model)
-```
-
-```{r, results = 'hide'}
-n = length(coef(new_model))
-new_model_back_bic = step(new_model, direction="backward", k=log(n), trace=0)
-```
-
-```{r}
-summary(new_model_back_bic)$r.squared
-length(coef(new_model_back_bic))
-anova(new_model_back_bic, model)
-```
 
 
 ## Interaction Models
 
 ```{r}
-big_mod_quad = lm(log(Hillary) ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
+# big_mod_quad = lm(log(Hillary) ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data[,-1])
+
+
+
+#int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
+#int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
+int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
+summary(int_mod)$r.squared
 ```
 
 
 ```{r}
-summary(big_mod_quad)$r.squared
-plot(fitted(big_mod_quad), resid(big_mod_quad), col = "grey", pch = 20,
+calc_loocv_rmse = function(model) {
+  sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
+}
+```
+
+```{r}
+#(resid(int_mod) / (1 - hatvalues(int_mod))) ^ 2
+calc_loocv_rmse(int_mod)
+calc_loocv_rmse(model)
+calc_loocv_rmse(model_back_aic)
+calc_loocv_rmse(model_back_bic)
+```
+
+```{r}
+summary(int_mod)$r.squared
+plot(fitted(int_mod), resid(int_mod), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(big_mod_quad),
+hist(resid(int_mod),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, big_mod_quad",
+     main   = "Histogram of Residuals, int_mod",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
-qqnorm(resid(big_mod_quad), main = "Normal Q-Q Plot, big_mod_quad", col = "darkgrey")
+qqnorm(resid(int_mod), main = "Normal Q-Q Plot, int_mod", col = "darkgrey")
+qqline(resid(int_mod), col = "dodgerblue", lwd = 2)
 ```
 
 ```{r}
