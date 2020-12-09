@@ -18,7 +18,6 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 ```{r, warning=FALSE}
 library(corrplot)
 pruned_data = final_table[,-c(1:2)] # without location data
-pruned_data <- pruned_data[c(-319),]
 #corrplot(cor(pruned_data), tl.cex = 0.5)
 ```
 
@@ -32,7 +31,6 @@ pruned_data$v3 = 1 * as.numeric(pruned_data$state_abbreviation == "AZ")
 pruned_data$v4 = 1 * as.numeric(pruned_data$state_abbreviation == "CA")
 pruned_data$v5 = 1 * as.numeric(pruned_data$state_abbreviation == "CO")
 pruned_data$v6 = 1 * as.numeric(pruned_data$state_abbreviation == "CT")
-pruned_data$v7 = 1 * as.numeric(pruned_data$state_abbreviation == "DC")
 pruned_data$v8 = 1 * as.numeric(pruned_data$state_abbreviation == "DE")
 pruned_data$v9 = 1 * as.numeric(pruned_data$state_abbreviation == "FL")
 pruned_data$v10 = 1 * as.numeric(pruned_data$state_abbreviation == "GA")
@@ -111,10 +109,15 @@ length(coef(model_back_bic))
 
 
 
-#int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
+int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
 #int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
-int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
+#int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
 summary(int_mod)$r.squared
+```
+
+
+```{r}
+new_int_mod = lm(Hillary ~ state_abbreviation * PST120214*AGE775214, data=pruned_data)
 ```
 
 
@@ -258,9 +261,9 @@ predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & pre
 
 ```{r}
 #nrow(predictors)
-final_table = predictors[predictors$Hillary != 0, ]
+final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
-final_table$Hillary <- final_table$Hillary * 100 #convert to percent
+final_table$Hillary <- final_table$Hillary * 100 # convert to percent
 final_table
 ```
 
