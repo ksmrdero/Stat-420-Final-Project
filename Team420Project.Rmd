@@ -7,11 +7,87 @@ output:
     theme: readable
     toc: yes
 ---
+```{r setup, echo = FALSE, message = FALSE, warning = FALSE}
+options(scipen = 1, digits = 4, width = 80, fig.align = "center")
+```
 
 # Introduction
 
 
 # Methods
+```{r}
+library(corrplot)
+pruned_data = final_table[,-c(1:3)] # without location data
+corrplot(cor(pruned_data), tl.cex = 0.5)
+```
+
+# Additive Models
+
+```{r}
+model = lm(Hillary ~ ., data=pruned_data)
+model_back_aic = step(new_model, direction="backward", k=2, trace=0)
+summary(model)$r.squared
+summary(model_back_aic)$r.squared
+#vif(model)
+#which(vif(model) > 5)
+```
+
+```{r}
+#new_model = lm(Hillary ~ PST040210 +PST120214+AGE775214+SEX255214+RHI525214+RHI625214+POP715213+EDU635213+LFE305213+HSG445213+HSG495213+HSD310213+BZA115213+SBO315207+SBO115207+SBO515207+SBO415207+SBO015207+RTN131207+LND110210+POP060210, data=pruned_data)
+new_model = lm(Hillary ~ AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207, data=pruned_data) # contains all the percent data
+summary(new_model)$r.squared
+```
+
+```{r}
+anova(new_model, model)
+```
+
+```{r, results = 'hide'}
+n = length(coef(new_model))
+new_model_back_bic = step(new_model, direction="backward", k=log(n), trace=0)
+```
+
+```{r}
+summary(new_model_back_bic)$r.squared
+length(coef(new_model_back_bic))
+anova(new_model_back_bic, model)
+```
+
+
+## Interaction Models
+
+```{r}
+big_mod_quad = lm(log(Hillary) ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
+```
+
+
+```{r}
+summary(big_mod_quad)$r.squared
+plot(fitted(big_mod_quad), resid(big_mod_quad), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
+abline(h = 0, col = "darkorange", lwd = 2)
+
+hist(resid(big_mod_quad),
+     xlab   = "Residuals",
+     main   = "Histogram of Residuals, big_mod_quad",
+     col    = "darkorange",
+     border = "dodgerblue",
+     breaks = 50)
+qqnorm(resid(big_mod_quad), main = "Normal Q-Q Plot, big_mod_quad", col = "darkgrey")
+```
+
+```{r}
+outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
+cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
+```
+
+
+
+```{r}
+small_model = lm(Hillary ~ (AGE295214 + AGE775214 + RHI125214 + RHI225214 + RHI625214 + RHI725214 + RHI825214 + POP815213 + EDU635213 + EDU685213 + LFE305213 + HSG096213 + HSG495213 + HSD410213 + HSD310213 + INC910213 + PVY020213 + BZA010213 + BZA110213 + NES010213 + SBO001207 + SBO315207 + SBO415207)^2 + I(AGE295214 ^2)+I( AGE775214 ^2)+I( RHI125214 ^2)+I( RHI225214 ^2)+I( RHI625214 ^2)+I( RHI725214 ^2)+I( RHI825214 ^2)+I( POP815213 ^2)+I( EDU635213 ^2)+I( EDU685213 ^2)+I( LFE305213 ^2)+I( HSG096213 ^2)+I( HSG495213 ^2)+I( HSD410213 ^2)+I( HSD310213 ^2)+I( INC910213 ^2)+I( PVY020213 ^2)+I( BZA010213 ^2)+I( BZA110213 ^2)+I( NES010213 ^2)+I( SBO001207 ^2)+I( SBO315207 ^2)+I( SBO415207^2), data = pruned_data)
+summary(small_model)$r.squared
+
+```
 
 
 # Results
