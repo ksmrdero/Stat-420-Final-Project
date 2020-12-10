@@ -22,10 +22,17 @@ pruned_data = final_table[,-c(1:2)] # without location data
 
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
 pruned_data$state_abbreviation
+pruned_data
 ```
 
 
 # Paramaterization
+
+# Initial Model
+
+```{r}
+initial_mod = lm(Hillary ~ state_abbreviation + POP010210 + AGE295214 + SEX255214 + RHI625214, data=pruned_data)
+```
 
 
 
@@ -168,6 +175,7 @@ summary(new_int_mod)$r.squared
 summary(model)$r.squared
 summary(model_back_aic)$r.squared
 summary(model_back_bic)$r.squared
+summary(initial_mod)$r.squared
 
 ```
 
@@ -181,6 +189,8 @@ calc_loocv_rmse(int_model_back_bic)
 calc_loocv_rmse(model)
 calc_loocv_rmse(model_back_aic)
 calc_loocv_rmse(model_back_bic)
+calc_loocv_rmse(initial_mod)
+
 
 ```
 
