@@ -20,14 +20,15 @@ library(lmtest)
 # Methods
 ```{r, warning=FALSE}
 library(corrplot)
-pruned_data = final_table[,-c(1:2)] # without location data
-#corrplot(cor(pruned_data), tl.cex = 0.5)
+pruned_data = final_table[,-c(1:2)]
 
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
 pruned_data$state_abbreviation
 pruned_data
 ```
-
+* Loaded lmtest and corrplot libraries
+* Removed unnecessary categorical variables such as location
+* Cleaned data
 
 # Paramaterization
 
@@ -35,9 +36,9 @@ pruned_data
 
 ```{r}
 initial_mod = lm(HSD410213 ~ RHI125214, data=pruned_data)
-
+initial_mod
 ```
-
+* Constructed an initial model that represents core of data
 
 # Additive Models
 
@@ -46,18 +47,17 @@ model = lm(Hillary ~ ., data=pruned_data)
 bptest(model)
 shapiro.test(resid(model))
 ```
-
+* Built a linear additive model with Hillary as the response and every variable as the predictor
+* Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
+* The high W value given from the Shapiro-Wilk test suggests a high level of normality
 ```{r}
-#full additive model
-
 n = length(coef(model))
 
-# using aic bic to remove unvaluable predictors
 model_back_aic = step(model, direction="backward", k=2, trace=0)
 model_back_bic = step(model, direction="backward", k=log(n), trace=0)
-#vif(model)
-#which(vif(model) > 5)
+
 ```
+* The AIC and BIC models are created to remove unvaluable predictors 
 
 ```{r}
 log_model = lm(log(Hillary) ~ ., data=pruned_data)
@@ -65,11 +65,9 @@ log_model = lm(log(Hillary) ~ ., data=pruned_data)
 plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 
-
-
-
 ```
-
+* The plot of the large additive model indicates that no major assumptions have been violates
+* The model is a log model as we wanted to observe the exponentiated regression coefficients
 
 ```{r}
 summary(model)$r.squared
@@ -80,10 +78,10 @@ length(coef(model))
 length(coef(model_back_aic))
 length(coef(model_back_bic))
 ```
+* We compare the r{2} values from each of the models created so far
+* They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
 ```{r}
-#checking model assumptions 
-
 summary(model_back_aic)$r.squared
 plot(fitted(model_back_aic), resid(model_back_aic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
@@ -95,14 +93,19 @@ hist(resid(model_back_aic),
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
+
 qqnorm(resid(model_back_aic), main = "Normal Q-Q Plot, model_back_aic", col = "darkgrey")
 qqline(resid(model_back_aic), col = "dodgerblue", lwd = 2)
 ```
-
-```{r}
-# saw line did bptest to double check
-
-```
+Check the AIC model assumptions
+1. r{2} value
+ + 0.4344
+2. Scatter Plot
+ + Fitted values against Residuals and find density of the plot to be mostly normal
+3. Plot Histogram
+ + Shows high normality of the AIC model
+4. QQ-Plot
+ + Shows a low average distance between error and regression line. However the small valleys, especially between the theoretical quantities of 1-2 show that there is a violation of normality.
 
 
 ```{r}
@@ -120,48 +123,57 @@ hist(resid(model_back_bic),
 qqnorm(resid(model_back_bic), main = "Normal Q-Q Plot, model_back_bic", col = "darkgrey")
 qqline(resid(model_back_bic), col = "dodgerblue", lwd = 2)
 ```
-
+Check the BIC model assumptions
+1. r{2} value
+ + 0.4327
+2. Scatter Plot
+ + Fitted values against Residuals. Very similar to AIC model, few more outliers
+3. Plot Histogram
+ + High normaility, slightly right skewed.
+4. QQ-Plot
+ + Residuals, generally, are relatively close to regression line, with small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
 ```{r}
-#compare full additive to smaller ones, keep smaller because high p value so we reject the null
 anova(model_back_aic, model)
 anova(model_back_bic, model)
 ```
+* Anova compares the AIC and BIC models against the full additive model
+* We choose the smaller model because of the higher p-value and therefore reject the null hypothesis
 
 
 ## Interaction Models
 
 ```{r}
-
- big_mod_quad = lm(Hillary ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
+#big_mod_quad = lm(Hillary ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
 
 # entire interaction models
+
 full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
 
+#int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
 
-int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
 #int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
 #int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
+
 summary(int_mod)$r.squared
 
 ```
-
+* Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
+* The resulting r{2} value of the interactive model is 0.5118
 ```{r}
-
-# used p values less than threshold (0.01) to select valuable predictors
 a = anova(full_int_mod)["Pr(>F)"]
+
 str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
 
-# hand selected valuable interactions, used it bc original model is too big to bic/aic
 new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
 
 ```
+* Used p-values less than threshold (0.01) to select valuable predictors
+* Hand selected valuable interactions
+ +Original model is too big for AIC or BIC
 
 ```{r}
-```
-
-```{r}
-# checking assumptions
 summary(int_mod)$r.squared
+
 plot(fitted(int_mod), resid(int_mod), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
@@ -172,10 +184,19 @@ hist(resid(int_mod),
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
+
 qqnorm(resid(int_mod), main = "Normal Q-Q Plot, int_mod", col = "darkgrey")
 qqline(resid(int_mod), col = "dodgerblue", lwd = 2)
 ```
-
+Check the Interactive model assumptions
+1. r{2} value
+ + 
+2. Scatter Plot
+ + 
+3. Plot Histogram
+ + 
+4. QQ-Plot
+ + 
 ```{r}
 outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
 cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
@@ -190,11 +211,12 @@ summary(small_model)$r.squared
 ```
 
 ```{r}
-# compare smaller to bigger model
 anova(full_int_mod, new_int_mod)
-
 ```
-
+Analyze the difference between the large interactive model and the small interactive model
+* The F-Statistic is 1.5 with aa p-value of 0.0038
+* We reject the null and choose the smaller model
+ + Shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
 
 # Results
 
