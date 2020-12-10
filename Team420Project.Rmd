@@ -19,62 +19,12 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 library(corrplot)
 pruned_data = final_table[,-c(1:2)] # without location data
 #corrplot(cor(pruned_data), tl.cex = 0.5)
+
+pruned_data = pruned_data[pruned_data$Hillary != 0,]
 ```
 
 
 # Paramaterization
-```{r}
-pruned_data$v0 = 1 * as.numeric(pruned_data$state_abbreviation == "AK")
-pruned_data$v1 = 1 * as.numeric(pruned_data$state_abbreviation == "AL")
-pruned_data$v2 = 1 * as.numeric(pruned_data$state_abbreviation == "AR")
-pruned_data$v3 = 1 * as.numeric(pruned_data$state_abbreviation == "AZ")
-pruned_data$v4 = 1 * as.numeric(pruned_data$state_abbreviation == "CA")
-pruned_data$v5 = 1 * as.numeric(pruned_data$state_abbreviation == "CO")
-pruned_data$v6 = 1 * as.numeric(pruned_data$state_abbreviation == "CT")
-pruned_data$v8 = 1 * as.numeric(pruned_data$state_abbreviation == "DE")
-pruned_data$v9 = 1 * as.numeric(pruned_data$state_abbreviation == "FL")
-pruned_data$v10 = 1 * as.numeric(pruned_data$state_abbreviation == "GA")
-pruned_data$v11 = 1 * as.numeric(pruned_data$state_abbreviation == "HI")
-pruned_data$v12 = 1 * as.numeric(pruned_data$state_abbreviation == "IA")
-pruned_data$v13 = 1 * as.numeric(pruned_data$state_abbreviation == "ID")
-pruned_data$v14 = 1 * as.numeric(pruned_data$state_abbreviation == "IL")
-pruned_data$v15 = 1 * as.numeric(pruned_data$state_abbreviation == "IN")
-pruned_data$v16 = 1 * as.numeric(pruned_data$state_abbreviation == "KS")
-pruned_data$v17 = 1 * as.numeric(pruned_data$state_abbreviation == "KY")
-pruned_data$v18 = 1 * as.numeric(pruned_data$state_abbreviation == "LA")
-pruned_data$v19 = 1 * as.numeric(pruned_data$state_abbreviation == "MA")
-pruned_data$v20 = 1 * as.numeric(pruned_data$state_abbreviation == "MD")
-pruned_data$v21 = 1 * as.numeric(pruned_data$state_abbreviation == "ME")
-pruned_data$v22 = 1 * as.numeric(pruned_data$state_abbreviation == "MI")
-pruned_data$v23 = 1 * as.numeric(pruned_data$state_abbreviation == "MN")
-pruned_data$v24 = 1 * as.numeric(pruned_data$state_abbreviation == "MO")
-pruned_data$v25 = 1 * as.numeric(pruned_data$state_abbreviation == "MS")
-pruned_data$v26 = 1 * as.numeric(pruned_data$state_abbreviation == "MT")
-pruned_data$v27 = 1 * as.numeric(pruned_data$state_abbreviation == "NC")
-pruned_data$v28 = 1 * as.numeric(pruned_data$state_abbreviation == "ND")
-pruned_data$v29 = 1 * as.numeric(pruned_data$state_abbreviation == "NE")
-pruned_data$v30 = 1 * as.numeric(pruned_data$state_abbreviation == "NH")
-pruned_data$v31 = 1 * as.numeric(pruned_data$state_abbreviation == "NJ")
-pruned_data$v32 = 1 * as.numeric(pruned_data$state_abbreviation == "NM")
-pruned_data$v33 = 1 * as.numeric(pruned_data$state_abbreviation == "NV")
-pruned_data$v34 = 1 * as.numeric(pruned_data$state_abbreviation == "NY")
-pruned_data$v35 = 1 * as.numeric(pruned_data$state_abbreviation == "OH")
-pruned_data$v36 = 1 * as.numeric(pruned_data$state_abbreviation == "OK")
-pruned_data$v37 = 1 * as.numeric(pruned_data$state_abbreviation == "OR")
-pruned_data$v38 = 1 * as.numeric(pruned_data$state_abbreviation == "PA")
-pruned_data$v39 = 1 * as.numeric(pruned_data$state_abbreviation == "RI")
-pruned_data$v40 = 1 * as.numeric(pruned_data$state_abbreviation == "SC")
-pruned_data$v41 = 1 * as.numeric(pruned_data$state_abbreviation == "SD")
-pruned_data$v42 = 1 * as.numeric(pruned_data$state_abbreviation == "TN")
-pruned_data$v43 = 1 * as.numeric(pruned_data$state_abbreviation == "TX")
-pruned_data$v44 = 1 * as.numeric(pruned_data$state_abbreviation == "UT")
-pruned_data$v45 = 1 * as.numeric(pruned_data$state_abbreviation == "VA")
-pruned_data$v46 = 1 * as.numeric(pruned_data$state_abbreviation == "VT")
-pruned_data$v47 = 1 * as.numeric(pruned_data$state_abbreviation == "WA")
-pruned_data$v48 = 1 * as.numeric(pruned_data$state_abbreviation == "WI")
-pruned_data$v49 = 1 * as.numeric(pruned_data$state_abbreviation == "WV")
-pruned_data$v50 = 1 * as.numeric(pruned_data$state_abbreviation == "WY")
-```
 
 
 
@@ -105,7 +55,7 @@ length(coef(model_back_bic))
 ## Interaction Models
 
 ```{r}
-# big_mod_quad = lm(log(Hillary) ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data[,-1])
+ big_mod_quad = lm(log(Hillary) ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
 
 
 
@@ -114,7 +64,11 @@ int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RH
 #int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
 summary(int_mod)$r.squared
 ```
-
+```{r}
+#anova(big_mod_quad)
+a = anova(big_mod_quad)["Pr(>F)"]
+row.names(a)[which(a < 0.01)]
+```
 
 ```{r}
 new_int_mod = lm(Hillary ~ state_abbreviation * PST120214*AGE775214, data=pruned_data)
@@ -262,8 +216,38 @@ predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & pre
 ```{r}
 #nrow(predictors)
 final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
-final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+#final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 final_table$Hillary <- final_table$Hillary * 100 # convert to percent
 final_table
 ```
+```{r}
+south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC', 'GA', 'AL', 'FL', 'MD', 'DC', 'DE')
+west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
+midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
+northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
+```
 
+
+```{r}
+for (c in 1:nrow(final_table)) {
+  if (final_table[c,]$state_abbreviation %in% south) {
+      final_table[c,]$state_abbreviation = 'S'
+  } else if (final_table[c,]$state_abbreviation %in% west){
+      final_table[c,]$state_abbreviation = 'W'
+  } else if (final_table[c,]$state_abbreviation %in% midwest){
+      final_table[c,]$state_abbreviation = 'M'
+  } else if (final_table[c,]$state_abbreviation %in% northeast){
+      final_table[c,]$state_abbreviation = 'N'
+  } else {
+      final_table = final_table[-c, ]
+  }
+}
+```
+
+```{r}
+
+
+final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+final_table
+```
