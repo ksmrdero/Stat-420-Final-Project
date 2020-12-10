@@ -16,6 +16,141 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 library(lmtest)
 ```
 
+## Data Cleaning
+```{r}
+data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
+results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
+library(stringr)
+```
+
+```{r}
+head(data)
+```
+
+
+
+```{r}
+head(data, 1)[3] == ""
+```
+
+```{r}
+data$state_abbreviation[4]
+```
+
+
+```{r}
+results[results$candidate == "Hillary Clinton", ]
+```
+
+```{r}
+data[data$state_abbreviation != "", ]
+
+predictors = data[data$state_abbreviation != "", ]
+```
+
+```{r}
+for (i in 1:nrow(predictors)) { 
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " County", "")
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " Parish", "")
+  #print(predictors$area_name[i])
+}
+
+#predictors$area_name[1]
+```
+
+
+```{r}
+predictors$area_name[1]
+```
+
+```{r}
+for (i in 1:nrow(predictors)) {
+  state = predictors$state_abbreviation[i]
+  fips = predictors$fips[i]
+  frac_vote = results[results$state_abbreviation == state & results$fips == fips & results$candidate == "Hillary Clinton",]$fraction_votes
+  #print(frac_vote)
+  if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(state)
+    #print(fips)
+  } else {
+    predictors$Hillary[i] = frac_vote
+  }
+  county = predictors$area_name[i]
+  frac_vote = results[results$county == county & results$candidate == "Hillary Clinton",]$fraction_votes
+  if (predictors$Hillary[i] == 0) {
+    if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(county)
+    } else {
+    predictors$Hillary[i] = frac_vote
+    }
+  }
+}
+
+head(predictors, 2)
+```
+
+```{r}
+temp = results[results$state_abbreviation == "AL" & results$fips == 1001 & results$candidate == "Hillary Clinton",]$fraction_votes
+
+predictors[predictors$state_abbreviation == "VT",]
+```
+```{r}
+predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & predictors$state_abbreviation != 'KS' & predictors$state_abbreviation != 'MN' & predictors$state_abbreviation != 'ME'& predictors$state_abbreviation != 'ND', ]
+
+```
+
+166 incorrect rows out of 3143 so maybe just drop all of those.
+
+**Final Dataframe**
+
+```{r}
+#nrow(predictors)
+final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
+#final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+final_table$Hillary <- final_table$Hillary * 100 # convert to percent
+final_table
+```
+```{r}
+south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC', 'GA', 'AL', 'FL', 'MD', 'DC', 'DE')
+west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
+midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
+northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
+```
+
+
+```{r, eval = FALSE}
+for (c in 1:nrow(final_table)) {
+  if (final_table[c,]$state_abbreviation %in% south) {
+      final_table[c,]$state_abbreviation = 'S'
+  } else if (final_table[c,]$state_abbreviation %in% west){
+      final_table[c,]$state_abbreviation = 'W'
+  } else if (final_table[c,]$state_abbreviation %in% midwest){
+      final_table[c,]$state_abbreviation = 'M'
+  } else if (final_table[c,]$state_abbreviation %in% northeast){
+      final_table[c,]$state_abbreviation = 'N'
+  } else {
+      final_table = final_table[-c, ]
+  }
+}
+```
+
+```{r}
+
+
+# final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+states = unique(final_table$state_abbreviation)
+tot = 0
+for (x in states) {
+  if (nrow(final_table[final_table$state_abbreviation == x, ]) < 45) {
+    final_table = final_table[final_table$state_abbreviation != x, ]
+  }
+  tot = tot + nrow(final_table[final_table$state_abbreviation == x, ])
+}
+tot = tot / 50
+tot
+final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+```
+
 
 # Methods
 ```{r, warning=FALSE}
@@ -154,7 +289,7 @@ full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
 #int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
 #int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
 
-summary(int_mod)$r.squared
+#summary(int_mod)$r.squared
 
 ```
 * Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
@@ -167,26 +302,27 @@ str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
 new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
 
 ```
+
 * Used p-values less than threshold (0.01) to select valuable predictors
 * Hand selected valuable interactions
  +Original model is too big for AIC or BIC
 
 ```{r}
-summary(int_mod)$r.squared
+summary(full_int_mod)$r.squared
 
-plot(fitted(int_mod), resid(int_mod), col = "grey", pch = 20,
+plot(fitted(full_int_mod), resid(full_int_mod), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(int_mod),
+hist(resid(full_int_mod),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, int_mod",
+     main   = "Histogram of Residuals, full_int_mod",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
 
-qqnorm(resid(int_mod), main = "Normal Q-Q Plot, int_mod", col = "darkgrey")
-qqline(resid(int_mod), col = "dodgerblue", lwd = 2)
+qqnorm(resid(full_int_mod), main = "Normal Q-Q Plot, full_int_mod", col = "darkgrey")
+qqline(resid(full_int_mod), col = "dodgerblue", lwd = 2)
 ```
 Check the Interactive model assumptions
 1. r{2} value
@@ -198,8 +334,8 @@ Check the Interactive model assumptions
 4. QQ-Plot
  + 
 ```{r}
-outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
-cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
+#outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
+#cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
 ```
 
 
@@ -213,8 +349,9 @@ summary(small_model)$r.squared
 ```{r}
 anova(full_int_mod, new_int_mod)
 ```
+
 Analyze the difference between the large interactive model and the small interactive model
-* The F-Statistic is 1.5 with aa p-value of 0.0038
+* The F-Statistic is 1.5 with a p-value of 0.0038
 * We reject the null and choose the smaller model
  + Shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
 
@@ -230,7 +367,6 @@ calc_loocv_rmse = function(model) {
 
 ```{r}
 summary(full_int_mod)$r.squared
-summary(big_mod_quad)$r.squared
 summary(new_int_mod)$r.squared
 summary(model)$r.squared
 summary(model_back_aic)$r.squared
@@ -242,10 +378,10 @@ summary(initial_mod)$r.squared
 ```{r}
 
 calc_loocv_rmse(full_int_mod)
-calc_loocv_rmse(big_mod_quad)
+#calc_loocv_rmse(big_mod_quad)
 calc_loocv_rmse(new_int_mod)
-calc_loocv_rmse(int_model_back_aic)
-calc_loocv_rmse(int_model_back_bic)
+#calc_loocv_rmse(int_model_back_aic)
+#calc_loocv_rmse(int_model_back_bic)
 calc_loocv_rmse(model)
 calc_loocv_rmse(model_back_aic)
 calc_loocv_rmse(model_back_bic)
@@ -260,136 +396,3 @@ calc_loocv_rmse(initial_mod)
 
 # Appendix
 
-```{r}
-data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
-results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
-library(stringr)
-```
-
-```{r}
-head(data)
-```
-
-
-
-```{r}
-head(data, 1)[3] == ""
-```
-
-```{r}
-data$state_abbreviation[4]
-```
-
-
-```{r}
-results[results$candidate == "Hillary Clinton", ]
-```
-
-```{r}
-data[data$state_abbreviation != "", ]
-
-predictors = data[data$state_abbreviation != "", ]
-```
-
-```{r}
-for (i in 1:nrow(predictors)) { 
-  predictors$area_name[i] = str_replace(predictors$area_name[i], " County", "")
-  predictors$area_name[i] = str_replace(predictors$area_name[i], " Parish", "")
-  #print(predictors$area_name[i])
-}
-
-#predictors$area_name[1]
-```
-
-
-```{r}
-predictors$area_name[1]
-```
-
-```{r}
-for (i in 1:nrow(predictors)) {
-  state = predictors$state_abbreviation[i]
-  fips = predictors$fips[i]
-  frac_vote = results[results$state_abbreviation == state & results$fips == fips & results$candidate == "Hillary Clinton",]$fraction_votes
-  #print(frac_vote)
-  if (length(frac_vote) == 0 || is.na(frac_vote)) {
-    #print(state)
-    #print(fips)
-  } else {
-    predictors$Hillary[i] = frac_vote
-  }
-  county = predictors$area_name[i]
-  frac_vote = results[results$county == county & results$candidate == "Hillary Clinton",]$fraction_votes
-  if (predictors$Hillary[i] == 0) {
-    if (length(frac_vote) == 0 || is.na(frac_vote)) {
-    #print(county)
-    } else {
-    predictors$Hillary[i] = frac_vote
-    }
-  }
-}
-
-head(predictors, 2)
-```
-
-```{r}
-temp = results[results$state_abbreviation == "AL" & results$fips == 1001 & results$candidate == "Hillary Clinton",]$fraction_votes
-
-predictors[predictors$state_abbreviation == "VT",]
-```
-```{r}
-predictors[predictors$Hillary == 0 & predictors$state_abbreviation != 'AK' & predictors$state_abbreviation != 'KS' & predictors$state_abbreviation != 'MN' & predictors$state_abbreviation != 'ME'& predictors$state_abbreviation != 'ND', ]
-
-```
-
-166 incorrect rows out of 3143 so maybe just drop all of those.
-
-**Final Dataframe**
-
-```{r}
-#nrow(predictors)
-final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
-#final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
-final_table$Hillary <- final_table$Hillary * 100 # convert to percent
-final_table
-```
-```{r}
-south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC', 'GA', 'AL', 'FL', 'MD', 'DC', 'DE')
-west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
-midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
-northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
-```
-
-
-```{r, eval = FALSE}
-for (c in 1:nrow(final_table)) {
-  if (final_table[c,]$state_abbreviation %in% south) {
-      final_table[c,]$state_abbreviation = 'S'
-  } else if (final_table[c,]$state_abbreviation %in% west){
-      final_table[c,]$state_abbreviation = 'W'
-  } else if (final_table[c,]$state_abbreviation %in% midwest){
-      final_table[c,]$state_abbreviation = 'M'
-  } else if (final_table[c,]$state_abbreviation %in% northeast){
-      final_table[c,]$state_abbreviation = 'N'
-  } else {
-      final_table = final_table[-c, ]
-  }
-}
-```
-
-```{r}
-
-
-# final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
-states = unique(final_table$state_abbreviation)
-tot = 0
-for (x in states) {
-  if (nrow(final_table[final_table$state_abbreviation == x, ]) < 45) {
-    final_table = final_table[final_table$state_abbreviation != x, ]
-  }
-  tot = tot + nrow(final_table[final_table$state_abbreviation == x, ])
-}
-tot = tot / 50
-tot
-final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
-```
