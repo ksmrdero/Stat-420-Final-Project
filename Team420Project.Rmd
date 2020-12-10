@@ -21,6 +21,39 @@ library(lmtest)
 data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
 results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
 library(stringr)
+predictors = data[data$state_abbreviation != "", ]
+for (i in 1:nrow(predictors)) { 
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " County", "")
+  predictors$area_name[i] = str_replace(predictors$area_name[i], " Parish", "")
+  #print(predictors$area_name[i])
+}
+
+for (i in 1:nrow(predictors)) {
+  state = predictors$state_abbreviation[i]
+  fips = predictors$fips[i]
+  frac_vote = results[results$state_abbreviation == state & results$fips == fips & results$candidate == "Hillary Clinton",]$fraction_votes
+  #print(frac_vote)
+  if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(state)
+    #print(fips)
+  } else {
+    predictors$Hillary[i] = frac_vote
+  }
+  county = predictors$area_name[i]
+  frac_vote = results[results$county == county & results$candidate == "Hillary Clinton",]$fraction_votes
+  if (predictors$Hillary[i] == 0) {
+    if (length(frac_vote) == 0 || is.na(frac_vote)) {
+    #print(county)
+    } else {
+    predictors$Hillary[i] = frac_vote
+    }
+  }
+}
+
+final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
+final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+final_table$Hillary <- final_table$Hillary * 100 # convert to percent
+final_table
 ```
 
 ```{r}
