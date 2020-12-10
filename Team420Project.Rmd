@@ -12,6 +12,9 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 ```
 
 # Introduction
+```{r}
+library(lmtest)
+```
 
 
 # Methods
@@ -31,16 +34,21 @@ pruned_data
 # Initial Model
 
 ```{r}
-initial_mod = lm(Hillary ~ state_abbreviation + POP010210 + AGE295214 + SEX255214 + RHI625214, data=pruned_data)
-```
+initial_mod = lm(HSD410213 ~ RHI125214, data=pruned_data)
 
+```
 
 
 # Additive Models
 
 ```{r}
-#full additive model
 model = lm(Hillary ~ ., data=pruned_data)
+bptest(model)
+shapiro.test(resid(model))
+```
+
+```{r}
+#full additive model
 
 n = length(coef(model))
 
@@ -50,6 +58,18 @@ model_back_bic = step(model, direction="backward", k=log(n), trace=0)
 #vif(model)
 #which(vif(model) > 5)
 ```
+
+```{r}
+log_model = lm(log(Hillary) ~ ., data=pruned_data)
+
+plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
+
+
+
+
+```
+
 
 ```{r}
 summary(model)$r.squared
@@ -80,6 +100,12 @@ qqline(resid(model_back_aic), col = "dodgerblue", lwd = 2)
 ```
 
 ```{r}
+# saw line did bptest to double check
+
+```
+
+
+```{r}
 summary(model_back_bic)$r.squared
 plot(fitted(model_back_bic), resid(model_back_bic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
@@ -93,6 +119,12 @@ hist(resid(model_back_bic),
      breaks = 50)
 qqnorm(resid(model_back_bic), main = "Normal Q-Q Plot, model_back_bic", col = "darkgrey")
 qqline(resid(model_back_bic), col = "dodgerblue", lwd = 2)
+```
+
+```{r}
+#compare full additive to smaller ones, keep smaller because high p value so we reject the null
+anova(model_back_aic, model)
+anova(model_back_bic, model)
 ```
 
 
@@ -154,6 +186,12 @@ cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mo
 ```{r}
 small_model = lm(Hillary ~ (AGE295214 + AGE775214 + RHI125214 + RHI225214 + RHI625214 + RHI725214 + RHI825214 + POP815213 + EDU635213 + EDU685213 + LFE305213 + HSG096213 + HSG495213 + HSD410213 + HSD310213 + INC910213 + PVY020213 + BZA010213 + BZA110213 + NES010213 + SBO001207 + SBO315207 + SBO415207)^2 + I(AGE295214 ^2)+I( AGE775214 ^2)+I( RHI125214 ^2)+I( RHI225214 ^2)+I( RHI625214 ^2)+I( RHI725214 ^2)+I( RHI825214 ^2)+I( POP815213 ^2)+I( EDU635213 ^2)+I( EDU685213 ^2)+I( LFE305213 ^2)+I( HSG096213 ^2)+I( HSG495213 ^2)+I( HSD410213 ^2)+I( HSD310213 ^2)+I( INC910213 ^2)+I( PVY020213 ^2)+I( BZA010213 ^2)+I( BZA110213 ^2)+I( NES010213 ^2)+I( SBO001207 ^2)+I( SBO315207 ^2)+I( SBO415207^2), data = pruned_data)
 summary(small_model)$r.squared
+
+```
+
+```{r}
+# compare smaller to bigger model
+anova(full_int_mod, new_int_mod)
 
 ```
 
@@ -301,7 +339,7 @@ northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
 ```
 
 
-```{r}
+```{r, eval = FALSE}
 for (c in 1:nrow(final_table)) {
   if (final_table[c,]$state_abbreviation %in% south) {
       final_table[c,]$state_abbreviation = 'S'
@@ -320,7 +358,16 @@ for (c in 1:nrow(final_table)) {
 ```{r}
 
 
-final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+# final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+states = unique(final_table$state_abbreviation)
+tot = 0
+for (x in states) {
+  if (nrow(final_table[final_table$state_abbreviation == x, ]) < 45) {
+    final_table = final_table[final_table$state_abbreviation != x, ]
+  }
+  tot = tot + nrow(final_table[final_table$state_abbreviation == x, ])
+}
+tot = tot / 50
+tot
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
-final_table
 ```
