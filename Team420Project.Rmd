@@ -233,18 +233,19 @@ initial_mod
 # Additive Models
 
 ```{r}
-model = lm(Hillary ~ ., data=pruned_data)
-bptest(model)
-shapiro.test(resid(model))
+full_add_mod = lm(Hillary ~ ., data=pruned_data)
+bptest(full_add_mod)
+shapiro.test(resid(full_add_mod))
 ```
 * Built a linear additive model with Hillary as the response and every variable as the predictor
 * Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
 * The high W value given from the Shapiro-Wilk test suggests a high level of normality
+
 ```{r}
 n = length(coef(model))
 
-model_back_aic = step(model, direction="backward", k=2, trace=0)
-model_back_bic = step(model, direction="backward", k=log(n), trace=0)
+add_mod_back_aic = step(full_add_mod, direction="backward", k=2, trace=0)
+add_mod_back_bic = step(full_add_mod, direction="backward", k=log(n), trace=0)
 
 ```
 * The AIC and BIC models are created to remove unvaluable predictors 
@@ -256,36 +257,38 @@ plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 
 ```
+
 * The plot of the large additive model indicates that no major assumptions have been violates
 * The model is a log model as we wanted to observe the exponentiated regression coefficients
 
-```{r}
-summary(model)$r.squared
-summary(model_back_aic)$r.squared
-summary(model_back_bic)$r.squared
 
-length(coef(model))
-length(coef(model_back_aic))
-length(coef(model_back_bic))
+```{r}
+summary(add_mod)$r.squared
+summary(add_mod_back_aic)$r.squared
+summary(add_mod_back_bic)$r.squared
+
+length(coef(add_mod))
+length(coef(add_mod_back_aic))
+length(coef(add_mod_back_bic))
 ```
 * We compare the r{2} values from each of the models created so far
 * They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
 ```{r}
-summary(model_back_aic)$r.squared
-plot(fitted(model_back_aic), resid(model_back_aic), col = "grey", pch = 20,
+summary(add_mod_back_aic)$r.squared
+plot(fitted(add_mod_back_aic), resid(add_mod_back_aic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(model_back_aic),
+hist(resid(add_mod_back_aic),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, model_back_aic",
+     main   = "Histogram of Residuals, add_mod_back_aic",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
 
-qqnorm(resid(model_back_aic), main = "Normal Q-Q Plot, model_back_aic", col = "darkgrey")
-qqline(resid(model_back_aic), col = "dodgerblue", lwd = 2)
+qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col = "darkgrey")
+qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
 ```
 Check the AIC model assumptions
 1. r{2} value
@@ -299,19 +302,19 @@ Check the AIC model assumptions
 
 
 ```{r}
-summary(model_back_bic)$r.squared
-plot(fitted(model_back_bic), resid(model_back_bic), col = "grey", pch = 20,
+summary(add_mod_back_bic)$r.squared
+plot(fitted(add_mod_back_bic), resid(add_mod_back_bic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(model_back_bic),
+hist(resid(add_mod_back_bic),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, model_back_bic",
+     main   = "Histogram of Residuals, add_mod_back_bic",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
-qqnorm(resid(model_back_bic), main = "Normal Q-Q Plot, model_back_bic", col = "darkgrey")
-qqline(resid(model_back_bic), col = "dodgerblue", lwd = 2)
+qqnorm(resid(add_mod_back_bic), main = "Normal Q-Q Plot, add_mod_back_bic", col = "darkgrey")
+qqline(resid(add_mod_back_bic), col = "dodgerblue", lwd = 2)
 ```
 Check the BIC model assumptions
 1. r{2} value
@@ -323,8 +326,8 @@ Check the BIC model assumptions
 4. QQ-Plot
  + Residuals, generally, are relatively close to regression line, with small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
 ```{r}
-anova(model_back_aic, model)
-anova(model_back_bic, model)
+anova(add_mod_back_aic, model)
+anova(add_mod_back_bic, model)
 ```
 * Anova compares the AIC and BIC models against the full additive model
 * We choose the smaller model because of the higher p-value and therefore reject the null hypothesis
@@ -333,19 +336,7 @@ anova(model_back_bic, model)
 ## Interaction Models
 
 ```{r}
-#big_mod_quad = lm(Hillary ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
-
-# entire interaction models
-
 full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
-length(coef(full_int_mod))
-
-#int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
-
-#int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
-#int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
-
-#summary(int_mod)$r.squared
 ```
 * Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
 * The resulting r{2} value of the interactive model is 0.5118
@@ -353,7 +344,7 @@ length(coef(full_int_mod))
 a = anova(full_int_mod)["Pr(>F)"]
 str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
 
-new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
+small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
 
 ```
 
@@ -362,43 +353,37 @@ new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = 
  +Original model is too big for AIC or BIC
 
 ```{r}
-summary(full_int_mod)$r.squared
+(small_int_mod_r2 = summary(new_int_mod)$r.squared)
 
-plot(fitted(full_int_mod), resid(full_int_mod), col = "grey", pch = 20,
-     xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
+plot(fitted(new_int_mod), resid(new_int_mod), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Small Int Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(full_int_mod),
+hist(resid(new_int_mod),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, full_int_mod",
+     main   = "Histogram of Residuals, small_int_mod",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
 
-qqnorm(resid(full_int_mod), main = "Normal Q-Q Plot, full_int_mod", col = "darkgrey")
-qqline(resid(full_int_mod), col = "dodgerblue", lwd = 2)
+qqnorm(resid(new_int_mod), main = "Normal Q-Q Plot, small_int_mod", col = "darkgrey")
+qqline(resid(new_int_mod), col = "dodgerblue", lwd = 2)
 ```
 Check the Interactive model assumptions
 1. r{2} value
- + 
-2. Scatter Plot
- + 
+ + `r small_int_mod_r2`
+2. Residuals Plot
+ + At every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
 3. Plot Histogram
- + 
+ + The histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
 4. QQ-Plot
- + 
+ + As the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
+ 
 ```{r}
 #outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
 #cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
 ```
 
-
-
-```{r}
-small_model = lm(Hillary ~ (AGE295214 + AGE775214 + RHI125214 + RHI225214 + RHI625214 + RHI725214 + RHI825214 + POP815213 + EDU635213 + EDU685213 + LFE305213 + HSG096213 + HSG495213 + HSD410213 + HSD310213 + INC910213 + PVY020213 + BZA010213 + BZA110213 + NES010213 + SBO001207 + SBO315207 + SBO415207)^2 + I(AGE295214 ^2)+I( AGE775214 ^2)+I( RHI125214 ^2)+I( RHI225214 ^2)+I( RHI625214 ^2)+I( RHI725214 ^2)+I( RHI825214 ^2)+I( POP815213 ^2)+I( EDU635213 ^2)+I( EDU685213 ^2)+I( LFE305213 ^2)+I( HSG096213 ^2)+I( HSG495213 ^2)+I( HSD410213 ^2)+I( HSD310213 ^2)+I( INC910213 ^2)+I( PVY020213 ^2)+I( BZA010213 ^2)+I( BZA110213 ^2)+I( NES010213 ^2)+I( SBO001207 ^2)+I( SBO315207 ^2)+I( SBO415207^2), data = pruned_data)
-summary(small_model)$r.squared
-
-```
 
 ```{r}
 anova(full_int_mod, new_int_mod)
@@ -423,8 +408,8 @@ calc_loocv_rmse = function(model) {
 summary(full_int_mod)$r.squared
 summary(new_int_mod)$r.squared
 summary(model)$r.squared
-summary(model_back_aic)$r.squared
-summary(model_back_bic)$r.squared
+summary(add_mod_back_aic)$r.squared
+summary(add_mod_back_bic)$r.squared
 summary(initial_mod)$r.squared
 
 ```
@@ -432,8 +417,8 @@ summary(initial_mod)$r.squared
 ```{r}
 vif(new_int_mod)
 vif(model)
-vif(model_back_aic)
-vif(model_back_bic)
+vif(add_mod_back_aic)
+vif(add_mod_back_bic)
 ```
 
 
@@ -442,14 +427,12 @@ vif(model_back_bic)
 calc_loocv_rmse(full_int_mod)
 #calc_loocv_rmse(big_mod_quad)
 calc_loocv_rmse(new_int_mod)
-#calc_loocv_rmse(int_model_back_aic)
-#calc_loocv_rmse(int_model_back_bic)
-calc_loocv_rmse(model)
-calc_loocv_rmse(model_back_aic)
-calc_loocv_rmse(model_back_bic)
+#calc_loocv_rmse(int_add_mod_back_aic)
+#calc_loocv_rmse(int_add_mod_back_bic)
+calc_loocv_rmse(full_add_mod)
+calc_loocv_rmse(add_mod_back_aic)
+calc_loocv_rmse(add_mod_back_bic)
 calc_loocv_rmse(initial_mod)
-
-
 ```
 
 
