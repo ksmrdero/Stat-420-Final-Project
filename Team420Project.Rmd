@@ -51,8 +51,30 @@ for (i in 1:nrow(predictors)) {
 }
 
 final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
-final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+
 final_table$Hillary <- final_table$Hillary * 100 # convert to percent
+
+south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC', 'GA', 'AL', 'FL', 'MD', 'DC', 'DE')
+west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
+midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
+northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
+
+for (c in 1:nrow(final_table)) {
+  if (final_table[c,]$state_abbreviation %in% south) {
+      final_table[c,]$state_abbreviation = 'S'
+  } else if (final_table[c,]$state_abbreviation %in% west){
+      final_table[c,]$state_abbreviation = 'W'
+  } else if (final_table[c,]$state_abbreviation %in% midwest){
+      final_table[c,]$state_abbreviation = 'M'
+  } else if (final_table[c,]$state_abbreviation %in% northeast){
+      final_table[c,]$state_abbreviation = 'N'
+  } else {
+      final_table = final_table[-c, ]
+  }
+}
+final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+
+final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 final_table
 ```
 
@@ -174,13 +196,12 @@ for (c in 1:nrow(final_table)) {
 states = unique(final_table$state_abbreviation)
 tot = 0
 for (x in states) {
-  if (nrow(final_table[final_table$state_abbreviation == x, ]) < 45) {
+  if (nrow(final_table[final_table$state_abbreviation == x, ]) < 25) {
     final_table = final_table[final_table$state_abbreviation != x, ]
   }
   tot = tot + nrow(final_table[final_table$state_abbreviation == x, ])
 }
 tot = tot / 50
-tot
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 ```
 
@@ -203,7 +224,7 @@ pruned_data
 # Initial Model
 
 ```{r}
-initial_mod = lm(HSD410213 ~ RHI125214, data=pruned_data)
+initial_mod = lm(Hillary ~ RHI125214, data=pruned_data)
 initial_mod
 ```
 * Constructed an initial model that represents core of data
@@ -316,6 +337,7 @@ anova(model_back_bic, model)
 # entire interaction models
 
 full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
+length(coef(full_int_mod))
 
 #int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
 
@@ -323,13 +345,11 @@ full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
 #int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
 
 #summary(int_mod)$r.squared
-
 ```
 * Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
 * The resulting r{2} value of the interactive model is 0.5118
 ```{r}
 a = anova(full_int_mod)["Pr(>F)"]
-
 str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
 
 new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
