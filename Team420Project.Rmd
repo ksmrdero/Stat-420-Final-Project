@@ -422,7 +422,7 @@ We hope that the progress we have made to predicting vote proportion based on co
 
 # Appendix
 
-```{r}
+```{r, eval = FALSE}
 #This code was meant to try and remove some of the states if they had less than a certain number of data points. We attempted to use it in order to correct the shapiro and bp tests but it did not make any difference.
 
 # final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
