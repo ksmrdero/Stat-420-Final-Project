@@ -14,6 +14,7 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 # Introduction
 ```{r}
 library(lmtest)
+library(car)
 ```
 
 ## Data Cleaning
@@ -427,6 +428,14 @@ summary(model_back_bic)$r.squared
 summary(initial_mod)$r.squared
 
 ```
+
+```{r}
+vif(new_int_mod)
+vif(model)
+vif(model_back_aic)
+vif(model_back_bic)
+```
+
 
 ```{r}
 
