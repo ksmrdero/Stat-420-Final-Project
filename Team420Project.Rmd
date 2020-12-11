@@ -12,9 +12,10 @@ options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 ```
 
 # Introduction
-```{r}
+```{r, warning=FALSE}
 library(lmtest)
 library(car)
+library(corrplot)
 ```
 
 ## Data Cleaning
@@ -209,7 +210,6 @@ final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 
 # Methods
 ```{r, warning=FALSE}
-library(corrplot)
 pruned_data = final_table[,-c(1:2)]
 
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
@@ -220,7 +220,7 @@ pruned_data
 * Removed unnecessary categorical variables such as location
 * Cleaned data
 
-# Paramaterization
+
 
 # Initial Model
 
@@ -263,11 +263,11 @@ plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
 
 
 ```{r}
-summary(add_mod)$r.squared
+summary(full_add_mod)$r.squared
 summary(add_mod_back_aic)$r.squared
 summary(add_mod_back_bic)$r.squared
 
-length(coef(add_mod))
+length(coef(full_add_mod))
 length(coef(add_mod_back_aic))
 length(coef(add_mod_back_bic))
 ```
@@ -275,7 +275,6 @@ length(coef(add_mod_back_bic))
 * They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
 ```{r}
-summary(add_mod_back_aic)$r.squared
 plot(fitted(add_mod_back_aic), resid(add_mod_back_aic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
@@ -302,7 +301,6 @@ Check the AIC model assumptions
 
 
 ```{r}
-summary(add_mod_back_bic)$r.squared
 plot(fitted(add_mod_back_bic), resid(add_mod_back_bic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
@@ -353,8 +351,6 @@ small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data 
  +Original model is too big for AIC or BIC
 
 ```{r}
-(small_int_mod_r2 = summary(new_int_mod)$r.squared)
-
 plot(fitted(new_int_mod), resid(new_int_mod), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Small Int Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
@@ -416,7 +412,7 @@ summary(initial_mod)$r.squared
 
 ```{r}
 vif(new_int_mod)
-vif(model)
+vif(full_add_mod)
 vif(add_mod_back_aic)
 vif(add_mod_back_bic)
 ```
@@ -425,10 +421,7 @@ vif(add_mod_back_bic)
 ```{r}
 
 calc_loocv_rmse(full_int_mod)
-#calc_loocv_rmse(big_mod_quad)
 calc_loocv_rmse(new_int_mod)
-#calc_loocv_rmse(int_add_mod_back_aic)
-#calc_loocv_rmse(int_add_mod_back_bic)
 calc_loocv_rmse(full_add_mod)
 calc_loocv_rmse(add_mod_back_aic)
 calc_loocv_rmse(add_mod_back_bic)
