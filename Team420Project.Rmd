@@ -114,15 +114,7 @@ shapiro.test(resid(full_add_mod))
 corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
 ```
 
-Looking at the coorelation plot above, some variables seem to be highly correlated with one another. Checking for multicollineartiy:
-
-```{r}
-b_mod = lm(Hillary ~ .-PST040210-POP010210-EDU685213, data=pruned_data)
-b_mod_bic = step(full_add_mod, direction="backward", k=log(55), trace=0)
-summary(b_mod)$r.squared
-summary(full_add_mod)$r.squared
-```
-
+Looking at the coorelation plot above, some variables seem to be highly correlated with one another.
 
 
 ```{r}
@@ -197,7 +189,7 @@ qqnorm(resid(add_mod_back_bic), main = "Normal Q-Q Plot, add_mod_back_bic", col 
 qqline(resid(add_mod_back_bic), col = "dodgerblue", lwd = 2)
 ```
 Check the BIC model assumptions
-* Scatter Plot
+* Residual Plot
  + Fitted values against Residuals. Very similar to AIC model, few more outliers
 * Plot Histogram
  + High normaility, slightly right skewed.
@@ -250,7 +242,7 @@ Check the Interactive model assumptions
  + At every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
 - Plot Histogram
  + The histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
-- QQ-Plot
+- Q-Q Plot
  + As the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
  
 
@@ -291,8 +283,6 @@ calc_loocv_rmse(full_add_mod)
 calc_loocv_rmse(add_mod_back_aic)
 calc_loocv_rmse(add_mod_back_bic)
 calc_loocv_rmse(initial_mod)
-calc_loocv_rmse(b_mod)
-calc_loocv_rmse(b_mod_bic)
 ```
 
 ### Finding VIF percentages
