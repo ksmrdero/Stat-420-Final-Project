@@ -19,8 +19,9 @@ Some methods we used in this project are Data Cleaning/Formatting, Variable Sele
 
 ```{r}
 library(lmtest)
-library(faraway)
-library(corrplot)
+library(car)
+library(knitr)
+library(kableExtra)
 ```
 
 # Data Source
@@ -161,16 +162,20 @@ head(final_table)
 
 # Methods
 ```{r, warning=FALSE}
+library(corrplot)
 pruned_data = final_table[,-c(1:2)]
 
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
-head(pruned_data)
+pruned_data$state_abbreviation
+pruned_data
 ```
 * Loaded lmtest and corrplot libraries
 * Removed unnecessary categorical variables such as location
 * Cleaned data
 
-## Initial Model
+# Paramaterization
+
+# Initial Model
 
 ```{r}
 initial_mod = lm(Hillary ~ RHI125214, data=pruned_data)
@@ -178,29 +183,21 @@ initial_mod
 ```
 * Constructed an initial model that represents core of data
 
-## Additive Models
+# Additive Models
 
 ```{r}
-full_add_mod = lm(Hillary ~ ., data=pruned_data)
-bptest(full_add_mod)
-shapiro.test(resid(full_add_mod))
+model = lm(Hillary ~ ., data=pruned_data)
+bptest(model)
+shapiro.test(resid(model))
 ```
 * Built a linear additive model with Hillary as the response and every variable as the predictor
 * Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
 * The high W value given from the Shapiro-Wilk test suggests a high level of normality
-
 ```{r}
-corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
-```
+n = length(coef(model))
 
-Looking at the coorelation plot above, some variables seem to be highly correlated with one another.
-
-
-```{r}
-n = length(coef(full_add_mod))
-
-add_mod_back_aic = step(full_add_mod, direction="backward", k=2, trace=0)
-add_mod_back_bic = step(full_add_mod, direction="backward", k=log(n), trace=0)
+model_back_aic = step(model, direction="backward", k=2, trace=0)
+model_back_bic = step(model, direction="backward", k=log(n), trace=0)
 
 ```
 * The AIC and BIC models are created to remove unvaluable predictors 
@@ -212,71 +209,75 @@ plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 
 ```
-
 * The plot of the large additive model indicates that no major assumptions have been violates
 * The model is a log model as we wanted to observe the exponentiated regression coefficients
 
-
 ```{r}
-summary(full_add_mod)$r.squared
-summary(add_mod_back_aic)$r.squared
-summary(add_mod_back_bic)$r.squared
+summary(model)$r.squared
+summary(model_back_aic)$r.squared
+summary(model_back_bic)$r.squared
 
-length(coef(full_add_mod))
-length(coef(add_mod_back_aic))
-length(coef(add_mod_back_bic))
+length(coef(model))
+length(coef(model_back_aic))
+length(coef(model_back_bic))
 ```
 * We compare the r{2} values from each of the models created so far
 * They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
 ```{r}
-plot(fitted(add_mod_back_aic), resid(add_mod_back_aic), col = "grey", pch = 20,
+summary(model_back_aic)$r.squared
+plot(fitted(model_back_aic), resid(model_back_aic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(add_mod_back_aic),
+hist(resid(model_back_aic),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, add_mod_back_aic",
+     main   = "Histogram of Residuals, model_back_aic",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
 
-qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col = "darkgrey")
-qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
+qqnorm(resid(model_back_aic), main = "Normal Q-Q Plot, model_back_aic", col = "darkgrey")
+qqline(resid(model_back_aic), col = "dodgerblue", lwd = 2)
 ```
 Check the AIC model assumptions
-* Scatter Plot
+1. r{2} value
+ + 0.4344
+2. Scatter Plot
  + Fitted values against Residuals and find density of the plot to be mostly normal
-* Plot Histogram
+3. Plot Histogram
  + Shows high normality of the AIC model
-* QQ-Plot
+4. QQ-Plot
  + Shows a low average distance between error and regression line. However the small valleys, especially between the theoretical quantities of 1-2 show that there is a violation of normality.
 
 
 ```{r}
-plot(fitted(add_mod_back_bic), resid(add_mod_back_bic), col = "grey", pch = 20,
+summary(model_back_bic)$r.squared
+plot(fitted(model_back_bic), resid(model_back_bic), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(add_mod_back_bic),
+hist(resid(model_back_bic),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, add_mod_back_bic",
+     main   = "Histogram of Residuals, model_back_bic",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
-qqnorm(resid(add_mod_back_bic), main = "Normal Q-Q Plot, add_mod_back_bic", col = "darkgrey")
-qqline(resid(add_mod_back_bic), col = "dodgerblue", lwd = 2)
+qqnorm(resid(model_back_bic), main = "Normal Q-Q Plot, model_back_bic", col = "darkgrey")
+qqline(resid(model_back_bic), col = "dodgerblue", lwd = 2)
 ```
 Check the BIC model assumptions
-* Residual Plot
+1. r{2} value
+ + 0.4327
+2. Scatter Plot
  + Fitted values against Residuals. Very similar to AIC model, few more outliers
-* Plot Histogram
+3. Plot Histogram
  + High normaility, slightly right skewed.
-* QQ-Plot
+4. QQ-Plot
  + Residuals, generally, are relatively close to regression line, with small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
 ```{r}
-anova(add_mod_back_aic, full_add_mod)
-anova(add_mod_back_bic, full_add_mod)
+anova(model_back_aic, model)
+anova(model_back_bic, model)
 ```
 * Anova compares the AIC and BIC models against the full additive model
 * We choose the smaller model because of the higher p-value and therefore reject the null hypothesis
@@ -285,7 +286,19 @@ anova(add_mod_back_bic, full_add_mod)
 ## Interaction Models
 
 ```{r}
+#big_mod_quad = lm(Hillary ~ .^2 + I(PST045214^2)+I(PST040210^2)+I(PST120214^2)+I(POP010210^2)+I(AGE135214^2)+I(AGE295214^2)+I(AGE775214^2)+I(SEX255214^2)+I(RHI125214^2)+I(RHI225214^2)+I(RHI325214^2)+I(RHI425214^2)+I(RHI525214^2)+I(RHI625214^2)+I(RHI725214^2)+I(RHI825214^2)+I(POP715213^2)+I(POP645213^2)+I(POP815213^2)+I(EDU635213^2)+I(EDU685213^2)+I(VET605213^2)+I(LFE305213^2)+I(HSG010214^2)+I(HSG445213^2)+I(HSG096213^2)+I(HSG495213^2)+I(HSD410213^2)+I(HSD310213^2)+I(INC910213^2)+I(INC110213^2)+I(PVY020213^2)+I(BZA010213^2)+I(BZA110213^2)+I(BZA115213^2)+I(NES010213^2)+I(SBO001207^2)+I(SBO315207^2)+I(SBO115207^2)+I(SBO215207^2)+I(SBO515207^2)+I(SBO415207^2)+I(SBO015207^2)+I(MAN450207^2)+I(WTN220207^2)+I(RTN130207^2)+I(RTN131207^2)+I(AFN120207^2)+I(BPS030214^2)+I(LND110210^2)+I(POP060210^2), data=pruned_data)
+
+# entire interaction models
+
 full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
+length(coef(full_int_mod))
+
+#int_mod = lm(Hillary ~ (state_abbreviation + RHI125214 + RHI325214+ RHI225214+RHI425214+RHI525214+RHI625214+RHI725214+SBO001207+SBO315207+SBO115207+SBO215207+SBO515207+SBO415207+SBO015207+SEX255214+POP060210+PVY020213+HSG445213)^2, data=pruned_data)
+
+#int_mod = lm(Hillary ~ state_abbreviation * (POP010210+AGE135214+AGE295214+AGE775214+SEX255214+RHI125214+RHI225214+RHI325214+RHI425214+RHI525214+RHI625214+RHI725214+RHI825214+POP715213+POP645213+POP815213+EDU635213+EDU685213+VET605213+LFE305213+HSG010214+HSG445213+HSG096213+HSG495213+HSD410213+HSD310213+INC910213+INC110213+PVY020213+BZA010213+BZA110213+BZA115213+NES010213+SBO001207+SBO315207), data=pruned_data)
+#int_mod = lm(Hillary ~ (state_abbreviation + SBO115207)^2, data=pruned_data)
+
+#summary(int_mod)$r.squared
 ```
 * Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
 * The resulting r{2} value of the interactive model is 0.5118
@@ -293,7 +306,7 @@ full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
 a = anova(full_int_mod)["Pr(>F)"]
 str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
 
-small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
+new_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
 
 ```
 
@@ -302,31 +315,46 @@ small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data 
  +Original model is too big for AIC or BIC
 
 ```{r}
-plot(fitted(small_int_mod), resid(small_int_mod), col = "grey", pch = 20,
-     xlab = "Fitted", ylab = "Residuals", main = "Data from Small Int Mod")
+summary(full_int_mod)$r.squared
+
+plot(fitted(full_int_mod), resid(full_int_mod), col = "grey", pch = 20,
+     xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 abline(h = 0, col = "darkorange", lwd = 2)
 
-hist(resid(small_int_mod),
+hist(resid(full_int_mod),
      xlab   = "Residuals",
-     main   = "Histogram of Residuals, small_int_mod",
+     main   = "Histogram of Residuals, full_int_mod",
      col    = "darkorange",
      border = "dodgerblue",
      breaks = 50)
 
-qqnorm(resid(small_int_mod), main = "Normal Q-Q Plot, small_int_mod", col = "darkgrey")
-qqline(resid(small_int_mod), col = "dodgerblue", lwd = 2)
+qqnorm(resid(full_int_mod), main = "Normal Q-Q Plot, full_int_mod", col = "darkgrey")
+qqline(resid(full_int_mod), col = "dodgerblue", lwd = 2)
 ```
 Check the Interactive model assumptions
-- Residuals Plot
- + At every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
-- Plot Histogram
- + The histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
-- Q-Q Plot
- + As the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
- 
+1. r{2} value
+ + 
+2. Scatter Plot
+ + 
+3. Plot Histogram
+ + 
+4. QQ-Plot
+ + 
+```{r}
+#outliers = rstandard(big_mod_quad)[abs(rstandard(big_mod_quad)) > 2]
+#cooks.distance(big_mod_quad)[names(outliers)] > 4 / length(cooks.distance(big_mod_quad))
+```
+
+
 
 ```{r}
-anova(full_int_mod, small_int_mod)
+small_model = lm(Hillary ~ (AGE295214 + AGE775214 + RHI125214 + RHI225214 + RHI625214 + RHI725214 + RHI825214 + POP815213 + EDU635213 + EDU685213 + LFE305213 + HSG096213 + HSG495213 + HSD410213 + HSD310213 + INC910213 + PVY020213 + BZA010213 + BZA110213 + NES010213 + SBO001207 + SBO315207 + SBO415207)^2 + I(AGE295214 ^2)+I( AGE775214 ^2)+I( RHI125214 ^2)+I( RHI225214 ^2)+I( RHI625214 ^2)+I( RHI725214 ^2)+I( RHI825214 ^2)+I( POP815213 ^2)+I( EDU635213 ^2)+I( EDU685213 ^2)+I( LFE305213 ^2)+I( HSG096213 ^2)+I( HSG495213 ^2)+I( HSD410213 ^2)+I( HSD310213 ^2)+I( INC910213 ^2)+I( PVY020213 ^2)+I( BZA010213 ^2)+I( BZA110213 ^2)+I( NES010213 ^2)+I( SBO001207 ^2)+I( SBO315207 ^2)+I( SBO415207^2), data = pruned_data)
+summary(small_model)$r.squared
+
+```
+
+```{r}
+anova(full_int_mod, new_int_mod)
 ```
 
 Analyze the difference between the large interactive model and the small interactive model
@@ -336,6 +364,27 @@ Analyze the difference between the large interactive model and the small interac
 
 # Results
 
+```{r}
+test = names(coef(model_back_bic))
+test = test[-4]
+test = test[-3]
+test = test[-2]
+test[1] = "state_abbreviation"
+str_formula_2 = paste(test, collapse = " + ")
+str_formula_2
+```
+
+```{r}
+im_infl = cooks.distance(initial_mod)
+initial_low = lm(Hillary ~ RHI125214, data = pruned_data, subset = im_infl <= 4 / length(im_infl))
+
+model_infl = cooks.distance(model_back_bic)
+model_low = lm(as.formula(paste("Hillary", str_formula_2, sep = " ~ ")), data = pruned_data, subset = model_infl <= 4 / length(model_infl))
+
+nim_infl = cooks.distance(new_int_mod)
+new_int_low = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data, subset = nim_infl <= 4 / length(nim_infl))
+```
+
 
 ```{r}
 calc_loocv_rmse = function(model) {
@@ -343,41 +392,58 @@ calc_loocv_rmse = function(model) {
 }
 ```
 
+```{r}
+
+table_df = data.frame(
+  "Model" = c("Initial Model", "Small Additive", "Small Interactive"),
+  "R^2" = c(summary(initial_mod)$r.squared,
+            summary(model_back_bic)$r.squared,
+            summary(new_int_mod)$r.squared),
+  "RMSE" = c(calc_loocv_rmse(initial_mod),
+            calc_loocv_rmse(model_back_bic),
+            calc_loocv_rmse(new_int_mod)),
+  "RMSE lowered" = c(calc_loocv_rmse(initial_low),
+                      calc_loocv_rmse(model_low),
+                      calc_loocv_rmse(new_int_low))
+)
+kable(table_df, col.names = c("Model", "R^2", "RMSE","RMSE lowered"))%>%
+kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
 
 ```{r}
 summary(full_int_mod)$r.squared
-summary(small_int_mod)$r.squared
-summary(full_add_mod)$r.squared
-summary(add_mod_back_aic)$r.squared
-summary(add_mod_back_bic)$r.squared
+summary(new_int_mod)$r.squared
+summary(model)$r.squared
+summary(model_back_aic)$r.squared
+summary(model_back_bic)$r.squared
 summary(initial_mod)$r.squared
 
 ```
 
+```{r}
+vif(new_int_mod)
+vif(model)
+vif(model_back_aic)
+vif(model_back_bic)
+```
+
 
 ```{r}
+
 calc_loocv_rmse(full_int_mod)
-calc_loocv_rmse(small_int_mod)
-calc_loocv_rmse(full_add_mod)
-calc_loocv_rmse(add_mod_back_aic)
-calc_loocv_rmse(add_mod_back_bic)
+#calc_loocv_rmse(big_mod_quad)
+calc_loocv_rmse(new_int_mod)
+#calc_loocv_rmse(int_model_back_aic)
+#calc_loocv_rmse(int_model_back_bic)
+calc_loocv_rmse(model)
+calc_loocv_rmse(model_back_aic)
+calc_loocv_rmse(model_back_bic)
 calc_loocv_rmse(initial_mod)
+
+
 ```
 
-### Finding VIF percentages
-```{r}
-(full_add_mod_vif = vif(full_add_mod))
-
-length(which(full_add_mod_vif > 5)) / length(coef(full_add_mod))
-```
-
-```{r}
-length(which(vif(add_mod_back_aic) > 5)) / length(coef(add_mod_back_aic))
-length(which(vif(add_mod_back_bic) > 5)) / length(coef(add_mod_back_bic))
-length(which(vif(small_int_mod) > 5)) / length(coef(small_int_mod))
-```
-
-In our additive models, we see a lot of collineraity between the predictors. This can be explained by the fact that the predictors themselves are naturally related to one another. For instance, people with Bachelor degrees also will have a high school dipoma. When looking at the interactive model, the high percentage of VIF values reflect the correlation between the interaction term, and both of the individual terms. 
 
 # Discussion
 
