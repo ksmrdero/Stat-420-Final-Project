@@ -21,6 +21,8 @@ Some methods we used in this project are Data Cleaning/Formatting, Variable Sele
 library(lmtest)
 library(faraway)
 library(corrplot)
+library(knitr)
+library(kableExtra)
 ```
 
 # Data Source
@@ -335,6 +337,26 @@ Analyze the difference between the large interactive model and the small interac
  + Shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
 
 # Results
+```{r}
+test = names(coef(add_mod_back_bic))
+test = test[-4]
+test = test[-3]
+test = test[-2]
+test[1] = "state_abbreviation"
+str_formula_2 = paste(test, collapse = " + ")
+str_formula_2
+```
+
+```{r}
+im_infl = cooks.distance(initial_mod)
+initial_low = lm(Hillary ~ RHI125214, data = pruned_data, subset = im_infl <= 4 / length(im_infl))
+
+model_infl = cooks.distance(add_mod_back_bic)
+model_low = lm(as.formula(paste("Hillary", str_formula_2, sep = " ~ ")), data = pruned_data, subset = model_infl <= 4 / length(model_infl))
+
+nim_infl = cooks.distance(small_int_mod)
+new_int_low = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data, subset = nim_infl <= 4 / length(nim_infl))
+```
 
 
 ```{r}
@@ -342,6 +364,26 @@ calc_loocv_rmse = function(model) {
   sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
 }
 ```
+
+```{r}
+
+table_df = data.frame(
+  "Model" = c("Initial Model", "Small Additive", "Small Interactive"),
+  "R^2" = c(summary(initial_mod)$r.squared,
+            summary(add_mod_back_bic)$r.squared,
+            summary(small_int_mod)$r.squared),
+  "RMSE" = c(calc_loocv_rmse(initial_mod),
+             calc_loocv_rmse(add_mod_back_bic),
+             calc_loocv_rmse(small_int_mod)),
+  "RMSE lowered" = c(calc_loocv_rmse(initial_low),
+                     calc_loocv_rmse(model_low),
+                     calc_loocv_rmse(new_int_low))
+)
+kable(table_df, col.names = c("Model", "R^2", "RMSE","RMSE lowered"))%>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+```
+
 
 
 ```{r}
