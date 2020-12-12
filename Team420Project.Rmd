@@ -356,6 +356,10 @@ model_low = lm(as.formula(paste("Hillary", str_formula_2, sep = " ~ ")), data = 
 
 nim_infl = cooks.distance(small_int_mod)
 new_int_low = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data, subset = nim_infl <= 4 / length(nim_infl))
+
+c(length(im_infl[im_infl > 4 / length(im_infl)]),
+                     length(model_infl[model_infl > 4 / length(model_infl)]),
+                     length(nim_infl[nim_infl > 4 / length(nim_infl)]))
 ```
 
 
@@ -375,36 +379,20 @@ table_df = data.frame(
   "RMSE" = c(calc_loocv_rmse(initial_mod),
              calc_loocv_rmse(add_mod_back_bic),
              calc_loocv_rmse(small_int_mod)),
+  "Influential Points" = c(length(im_infl[im_infl > 4 / length(im_infl)]),
+                     length(model_infl[model_infl > 4 / length(model_infl)]),
+                     length(nim_infl[nim_infl > 4 / length(nim_infl)])),
   "RMSE lowered" = c(calc_loocv_rmse(initial_low),
                      calc_loocv_rmse(model_low),
                      calc_loocv_rmse(new_int_low))
+  
+  
 )
-kable(table_df, col.names = c("Model", "R^2", "RMSE","RMSE lowered"))%>%
+kable(table_df, col.names = c("Model", "R^2", "RMSE","Influential Points","RMSE lowered"))%>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
-
-
-
-```{r}
-summary(full_int_mod)$r.squared
-summary(small_int_mod)$r.squared
-summary(full_add_mod)$r.squared
-summary(add_mod_back_aic)$r.squared
-summary(add_mod_back_bic)$r.squared
-summary(initial_mod)$r.squared
-
-```
-
-
-```{r}
-calc_loocv_rmse(full_int_mod)
-calc_loocv_rmse(small_int_mod)
-calc_loocv_rmse(full_add_mod)
-calc_loocv_rmse(add_mod_back_aic)
-calc_loocv_rmse(add_mod_back_bic)
-calc_loocv_rmse(initial_mod)
-```
+This table compares our best additive model (the full additive model optimized using the BIC process), our best interaction model (the hand selected small model), and our intial model as a baseline. We initially compare the three models and find that the small interactive model has the lowest RMSE. Then, after we remove influential points, we find that all three models decrease in RMSE. Still, the small interactive model remains the model with the lowest RMSE.
 
 ### Finding VIF percentages
 ```{r}
@@ -427,15 +415,13 @@ For this project, we used a variety of strategies and metrics in order to build 
 
 Initially, the simple models that we were using were unable to pass the Breusche-Pagan test and Shapiro-Wilks tests. Although the plots looked fairly normal and randomly distributed, this led us to believe that there were problems with sparse points and categorical variables in our dataset. Therefore, we tried a number of strategies, including dropping states that had a very few number of counties (according to the average number of counties per state), changing the state categorial variable to region (For example, mapping states like ''CA' to 'West'), and removing unnecessary points such as the locational coordinates. We were able to obtain more normally distributed histograms of errors, a straighter QQplot trend, and a more random residual vs flitted plot. After marginally improving our plots through various pre-processing techniques, we decided to move forward with creating and testing the models.
 
-Our initial model ended up having the second highest RMSE. This made sense because we chose these predictors based off of personal intuition of factors that we thought would impact voting the most. In addition, there were no interaction terms in this formula. These reasons left us with a model that did not explore interactions between multiple variables and did not have all the predictors that were valuable in predicting vote proportions. Our full additive model had a lower RMSE (INSERT OTHER METRICS AFTER TABLE IS MADE). We decided to use the backwards AIC and BIC model steps in order to reduce the number of predictors in the model and found some improvement in the BIC-based model in (INSERT METRIC). Finally, we explored interaction models. First, we build a full, 2nd degree polynomial model with all of our predictors. This model had 1483 predictors and turned out to have a very large RMSE. We believe that this is due to a severe overfitting of the model since it had almost half as many predictors as number of rows in the data. We attempted a backwards AIC/BIC step on this model; however, due to its size the runtime was far too long. Instead, we used string and parsing tools in R in order to extract all the valuable interactions of the full interactive model, according to our threshold of 0.01, and create a new model with only those valuable predictors. This smaller, hand-selected model had the lowest RMSE out of all of our choices.
+Our initial model ended up having the second highest RMSE when compared to the rest of the models, only lower than the full interaction model. This made sense because we chose these predictors based off of personal intuition of factors that we thought would impact voting the most. In addition, there were no interaction terms in this formula. These reasons left us with a model that did not explore interactions between multiple variables and did not have all the predictors that were valuable in predicting vote proportions. Our full additive model had a lower RMSE. We decided to use the backwards AIC and BIC model steps in order to reduce the number of predictors in the model and found some improvement in the BIC-based model in RMSE to 12.95. Finally, we explored interaction models. First, we build a full, 2nd degree polynomial model with all of our predictors. This model had 1483 predictors and turned out to have a very large RMSE. We believe that this is due to a severe overfitting of the model since it had almost half as many predictors as number of rows in the data. We attempted a backwards AIC/BIC step on this model; however, due to its size the runtime was far too long. Instead, we used string and parsing tools in R in order to extract all the valuable interactions of the full interactive model, according to our threshold of 0.01, and create a new model with only those valuable predictors. This smaller, hand-selected model had the lowest RMSE out of all of our choices at 12.33.
 
-Finally, in order to try to optimize these models even further, we took our top 2 model choices, the smaller interaction model and the BIC-optimized additive model, along with our baseline initial model, and did an outlier/influential point analysis. We found that several highly influential points existed and we removed these models. We found that for our top two choices, this reduced the RMSE even more. After these additional steps, the smaller, hand-selected interaction model still had the lowest RMSE, so we are confident that we can use that model for this prediction task.
+Finally, in order to try to optimize these models even further, we took our top 2 model choices, the smaller interaction model and the BIC-optimized additive model, along with our baseline initial model, and did an outlier/influential point analysis. We found that several highly influential points existed and we removed these models. We found that for our top two choices, this reduced the RMSE even more. After these additional steps, the smaller, hand-selected interaction model had the most influential points (188) and still had the lowest RMSE at 10.53, so we are confident that we can use the small interaction model for this prediction task.
 
 In summary, there are a number of strategies and workarounds that allowed us to overcome some of the obstacles presented in the dataset in addition to opportunities to make these models more accurate. Our ideas to pre-process the dataset by identifying problems with its sparseness and categorial variables helped us create better QQ and residual plots, although were not able to get us pass the thresholds of the BP and Shapiro-Wilks tests. Our strategies of "hand-selecting" valuable interactions from our massive interaction model allowed us to optimize a very large model using parsing instead of a very slow step() function. In the future, we would apply a greater range of techniques when pre-processing in order to create more unformally distributed data. In addition, we might run more extensive outlier tests several times in order to make sure we are predicting on large clumps of data. Finally, we would start with smaller (possibly random) subsets of the big interaction model in order to use built-in tools such as the step() function.
 
 We hope that the progress we have made to predicting vote proportion based on county information will provide valuable insights for politicians and voters while exploring the complexities of a large and sparse dataset.
-
-
 
 # Appendix
 
