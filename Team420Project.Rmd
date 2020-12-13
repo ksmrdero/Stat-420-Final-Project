@@ -11,19 +11,19 @@ output:
 options(scipen = 1, digits = 4, width = 80, fig.align = "center")
 ```
 
-# Introduction
-
-The 2016 Primaries were influenced by many factors and the race between Bernie and Hillary across the United States was close. There are many factors that may have determined whether Hillary or Bernie won each county in each state. We tried to find a statistical model that could, given statistics about a specific county in a specific state, make a prediction for the fraction of Democratic votes Hillary would win. This fulfills the requirement for a continuous response variable because the output is a proportion. By being able to accurately predict the proportion of one democratic candidate given statistics about a county, we can make predictions about any future races and maybe see if similar models can be built.
-
-Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of R^2 and RMSE.
-
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 library(lmtest)
 library(faraway)
 library(corrplot)
 library(knitr)
 library(kableExtra)
+library(stringr)
 ```
+# Introduction
+
+The 2016 Primaries were influenced by many factors and the race between Bernie and Hillary across the United States was close. There are many factors that may have determined whether Hillary or Bernie won each county in each state. We tried to find a statistical model that could, given statistics about a specific county in a specific state, make a prediction for the fraction of Democratic votes Hillary would win. This fulfills the requirement for a continuous response variable because the output is a proportion. By being able to accurately predict the proportion of one democratic candidate given statistics about a county, we can make predictions about any future races and maybe see if similar models can be built.
+
+Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of R^2 and RMSE.
 
 ## Data Source
 
@@ -91,10 +91,11 @@ The data is split up into all of the different candidates from both the republic
 
 
 ## Data Cleaning
+The dataset contains 2 separate csv files for county facts and primary results. The below code merges the two into a single dataframe, and cleans up any of errors in the dataset (i.e. the county name is misspelled).
+
 ```{r, warning = FALSE, message = FALSE}
 data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
 results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
-library(stringr)
 # Read in the data and results from their respective .csv files.
 predictors = data[data$state_abbreviation != "", ]
 # Remove rows that do not have a state abbreviation.
@@ -125,7 +126,7 @@ for (i in 1:nrow(predictors)) {
     }
   }
 }
-# This for loop attaches a new column to the end of the predictors .csv file witht the proportion of Hillary Votes.
+# This for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes.
 
 final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
 # Remove DC because it adds a new binary variable due to one-hot encoding and only has one respective row. Kind of a # # waste.
@@ -161,8 +162,6 @@ head(final_table)
 ```
 
 
-166 incorrect rows out of 3143 so maybe just drop all of those.
-
 **Final Table has been created**
 
 # Methods
@@ -170,10 +169,8 @@ head(final_table)
 
 ```{r, warning=FALSE}
 pruned_data = final_table[,-c(1:2)]
-
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
 head(pruned_data)
-#kable(pruned_data[1:5, ], caption="our data")
 ```
 
 * Removed unnecessary categorical variables such as location
@@ -254,6 +251,7 @@ qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col 
 qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
 ```
 Check the AIC model assumptions
+
 * Scatter Plot
  + Fitted values against Residuals and find density of the plot to be mostly normal
 * Plot Histogram
@@ -399,6 +397,7 @@ kable(table_df, col.names = c("Model", "R^2", "RMSE","Influential Points","RMSE 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 
 ```
+
 This table compares our best additive model (the full additive model optimized using the BIC process), our best interaction model (the hand selected small model), and our intial model as a baseline. We initially compare the three models and find that the small interactive model has the lowest RMSE. Then, after we remove influential points, we find that all three models decrease in RMSE. Still, the small interactive model remains the model with the lowest RMSE.
 
 ### Finding VIF percentages
@@ -420,7 +419,7 @@ In our additive models, we see a lot of collineraity between the predictors. Thi
 
 For this project, we used a variety of strategies and metrics in order to build and test statistical models. Our goal for these models was, given information about a county in the United States, to be able to predict the proportion of votes for Hillary Clinton in the 2016 Presidential election. In total, we used a full additive model, reduced additive models using the AIC and BIC metrics, a log transformed additive model, a full interaction model, and a reduced interaction model using a threshold to pick out valuable interactions. 
 
-Initially, the simple models that we were using were unable to pass the Breusche-Pagan test and Shapiro-Wilks tests. Although the plots looked fairly normal and randomly distributed, this led us to believe that there were problems with sparse points and categorical variables in our dataset. Therefore, we tried a number of strategies, including dropping states that had a very few number of counties (according to the average number of counties per state), changing the state categorial variable to region (For example, mapping states like ''CA' to 'West'), and removing unnecessary points such as the locational coordinates. We were able to obtain more normally distributed histograms of errors, a straighter QQplot trend, and a more random residual vs flitted plot. After marginally improving our plots through various pre-processing techniques, we decided to move forward with creating and testing the models.
+Initially, the simple models that we were using were unable to pass the Breusche-Pagan test and Shapiro-Wilks tests. Although the plots looked fairly normal and randomly distributed, this led us to believe that there were problems with sparse points and categorical variables in our dataset. Therefore, we tried a number of strategies, including dropping states that had a very few number of counties (according to the average number of counties per state), changing the state categorial variable to region (For example, mapping states like ''CA' to 'West'), and removing unnecessary points such as the locational coordinates. We were able to obtain more normally distributed histograms of errors, a straighter QQ plot trend, and a more random residual vs flitted plot. After marginally improving our plots through various pre-processing techniques, we decided to move forward with creating and testing the models.
 
 Our initial model ended up having the second highest RMSE when compared to the rest of the models, only lower than the full interaction model. This made sense because we chose these predictors based off of personal intuition of factors that we thought would impact voting the most. In addition, there were no interaction terms in this formula. These reasons left us with a model that did not explore interactions between multiple variables and did not have all the predictors that were valuable in predicting vote proportions. Our full additive model had a lower RMSE. We decided to use the backwards AIC and BIC model steps in order to reduce the number of predictors in the model and found some improvement in the BIC-based model in RMSE to 12.95. Finally, we explored interaction models. First, we build a full, 2nd degree polynomial model with all of our predictors. This model had 1483 predictors and turned out to have a very large RMSE. We believe that this is due to a severe overfitting of the model since it had almost half as many predictors as number of rows in the data. We attempted a backwards AIC/BIC step on this model; however, due to its size the runtime was far too long. Instead, we used string and parsing tools in R in order to extract all the valuable interactions of the full interactive model, according to our threshold of 0.01, and create a new model with only those valuable predictors. This smaller, hand-selected model had the lowest RMSE out of all of our choices at 12.33.
 
