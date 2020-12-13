@@ -167,7 +167,7 @@ head(pruned_data)
 initial_mod = lm(Hillary ~ RHI125214, data=pruned_data)
 initial_mod
 ```
-* Constructed an initial model that represents core of data
+* Constructed an initial simple model to compare other models to as a baseline. Hand-selected a single valuable predictor in order to check model assumptions.
 
 ## Additive Models
 
@@ -177,8 +177,8 @@ bptest(full_add_mod)
 shapiro.test(resid(full_add_mod))
 ```
 * Built a linear additive model with Hillary as the response and every variable as the predictor
-* Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
-* The high W value given from the Shapiro-Wilk test suggests a high level of normality
+* Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value. This shows that the BP test was violated even with an extremely simple model. As discussed in the discussion section, we tried various data transformations in order to validate model assumptions but were unable to do so with a dataset with a lot of overlapping categories and sparse points.
+* The low p value given from the Shapiro-Wilk test suggests that the data does not follow a normal distribution.
 
 ```{r}
 corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
@@ -194,7 +194,7 @@ add_mod_back_aic = step(full_add_mod, direction="backward", k=2, trace=0)
 add_mod_back_bic = step(full_add_mod, direction="backward", k=log(n), trace=0)
 
 ```
-* The AIC and BIC models are created to remove unvaluable predictors 
+* The AIC and BIC-based models are created via backwards stepping from the full additive to remove unvaluable predictors 
 
 ```{r}
 log_model = lm(log(Hillary) ~ ., data=pruned_data)
@@ -215,7 +215,7 @@ length(coef(add_mod_back_aic))
 length(coef(add_mod_back_bic))
 ```
 * We compare the r{2} values from each of the models created so far
-* They are all relatively similar, with the AIC and BIC models showing slightly lower values
+* They are all relatively similar, with the AIC and BIC models showing slightly lower values.
 
 ```{r}
 plot(fitted(add_mod_back_aic), resid(add_mod_back_aic), col = "grey", pch = 20,
@@ -261,7 +261,7 @@ anova(add_mod_back_aic, full_add_mod)
 anova(add_mod_back_bic, full_add_mod)
 ```
 * Anova compares the AIC and BIC models against the full additive model
-* The BIC model is the better of the smaller models as it has the higher F-Statistic and lower p-value
+* For both models, we can conclude from the ANOVA tests that the smaller models (add_mod_back_aic and add_mod_back_bic) are stronger models. This is because the null hypothesis is that the extra predictors in the large model have coefficients of zero, and the high p-value shows that we fail to reject the null hypothesis. Therefore, we should compare the AIC and BIC models' RMSE going forward. We found in the appendix section that the BIC model has lower RMSE.
 
 ## Interaction Models
 
@@ -414,3 +414,14 @@ for (x in states) {
 tot = tot / 50
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
 ```
+
+This code was used to compare the RMSEs of all our models before narrowing our choices to our final 3 models displayed in our results table.
+```{r}
+calc_loocv_rmse(initial_mod)
+calc_loocv_rmse(full_add_mod)
+calc_loocv_rmse(add_mod_back_aic)
+calc_loocv_rmse(add_mod_back_bic)
+calc_loocv_rmse(small_int_mod)
+calc_loocv_rmse(full_int_mod)
+```
+
