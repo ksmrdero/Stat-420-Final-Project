@@ -155,6 +155,7 @@ The states are broke down into regions sinces reduces the dimensionality of the 
 Without this modification, the full interaction model would have more coefficients than there exists data points (rows) in the dataframe. 
 This is because of the one-hot encoding of our categorical variable would have a predictor for each of the 50 states. 
 While this categorization does result in a loss of information, it does make future computations easier and allows for p-values to exist.
+We save our final dataframe in pruned_data below:
 
 ```{r, warning=FALSE}
 pruned_data = predictors[,-c(1:2)] # don't want fips or county name
@@ -165,7 +166,7 @@ pruned_data = pruned_data[pruned_data$Hillary != 0,]
 corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
 ```
 
-Looking at the coorelation plot above, some variables seem to be highly correlated with one another. 
+Looking at the coorelation plot above, some variables seem to be correlated with one another. 
 
 # Methods
 
@@ -175,8 +176,7 @@ Looking at the coorelation plot above, some variables seem to be highly correlat
 initial_mod = lm(Hillary ~ RHI125214, data=pruned_data)
 initial_mod
 ```
-
-* Constructed an initial model that represents core of data
+* Constructed an initial simple model to compare other models to as a baseline. Hand-selected a single valuable predictor in order to check model assumptions.
 
 ## Additive Models
 
@@ -187,8 +187,8 @@ shapiro.test(resid(full_add_mod))
 ```
 
 * Built a linear additive model with Hillary as the response and every variable as the predictor
-* Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
-* The high W value given from the Shapiro-Wilk test suggests a high level of normality
+* Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value. This shows that the BP test was violated even with an extremely simple model. As discussed in the discussion section, we tried various data transformations in order to validate model assumptions but were unable to do so with a dataset with a lot of overlapping categories and sparse points.
+* The low p value given from the Shapiro-Wilk test suggests that the data does not follow a normal distribution.
 
 
 ```{r}
@@ -198,8 +198,7 @@ add_mod_back_aic = step(full_add_mod, direction="backward", k=2, trace=0)
 add_mod_back_bic = step(full_add_mod, direction="backward", k=log(n), trace=0)
 
 ```
-
-* The AIC and BIC models are created to remove unvaluable predictors 
+* The AIC and BIC-based models are created via backwards stepping from the full additive to remove unvaluable predictors 
 
 ```{r}
 log_model = lm(log(Hillary) ~ ., data=pruned_data)
@@ -274,7 +273,7 @@ anova(add_mod_back_bic, full_add_mod)
 ```
 
 * Anova compares the AIC and BIC models against the full additive model
-* The BIC model is the better of the smaller models as it has the higher F-Statistic and lower p-value
+* For both models, we can conclude from the ANOVA tests that the smaller models (add_mod_back_aic and add_mod_back_bic) are stronger models. This is because the null hypothesis is that the extra predictors in the large model have coefficients of zero, and the high p-value shows that we fail to reject the null hypothesis. Therefore, we should compare the AIC and BIC models' RMSE going forward. We found in the appendix section that the BIC model has lower RMSE.
 
 ## Interaction Models
 
@@ -292,7 +291,7 @@ small_int_formula = paste(row.names(p_vals)[which(p_vals < 0.01)], collapse = " 
 small_int_mod = lm(as.formula(paste("Hillary", small_int_formula, sep = " ~ ")), data = pruned_data)
 ```
 
-Here, we use p-values less than threshold (0.01) to select valuable predictors.
+We use p-values less than threshold (0.01) to select valuable predictors.
 
 ```{r}
 plot(fitted(small_int_mod), resid(small_int_mod), col = "grey", pch = 20,
@@ -317,7 +316,7 @@ Check the Interactive model assumptions:
 * QQ Plot: as the QQ plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
 
 
-Now, let's try to compare the two interaction models. 
+Now, comparing the two interaction models, 
 ```{r}
 calc_loocv_rmse = function(model) {
   sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
@@ -388,12 +387,7 @@ This table compares our best additive model (the full additive model optimized u
 
 ### Finding VIF percentages
 ```{r}
-(full_add_mod_vif = vif(full_add_mod))
-
-length(which(full_add_mod_vif > 5)) / length(coef(full_add_mod))
-```
-
-```{r}
+length(which(vif(full_add_mod) > 5)) / length(coef(full_add_mod))
 length(which(vif(add_mod_back_aic) > 5)) / length(coef(add_mod_back_aic))
 length(which(vif(add_mod_back_bic) > 5)) / length(coef(add_mod_back_bic))
 length(which(vif(small_int_mod) > 5)) / length(coef(small_int_mod))
@@ -430,6 +424,16 @@ for (x in states) {
 }
 tot = tot / 50
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation)
+```
+
+This code was used to compare the RMSEs of all our models before narrowing our choices to our final 3 models displayed in our results table.
+```{r}
+calc_loocv_rmse(initial_mod)
+calc_loocv_rmse(full_add_mod)
+calc_loocv_rmse(add_mod_back_aic)
+calc_loocv_rmse(add_mod_back_bic)
+calc_loocv_rmse(full_int_mod)
+calc_loocv_rmse(small_int_mod)
 ```
 
 This report was done by Ruben Verghese, Simer Singh, Gautam Ajjarapu, and James Wei.
