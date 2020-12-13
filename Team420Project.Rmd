@@ -23,7 +23,7 @@ library(stringr)
 
 The 2016 Primaries were influenced by many factors and the race between Bernie and Hillary across the United States was close. There are many factors that may have determined whether Hillary or Bernie won each county in each state. We tried to find a statistical model that could, given statistics about a specific county in a specific state, make a prediction for the fraction of Democratic votes Hillary would win. This fulfills the requirement for a continuous response variable because the output is a proportion. By being able to accurately predict the proportion of one democratic candidate given statistics about a county, we can make predictions about any future races and maybe see if similar models can be built.
 
-Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, and Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of R^2 and RMSE.
+Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, and Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of $R^2$ and RMSE.
 
 ## Data Source
 
@@ -119,50 +119,46 @@ for (i in 1:nrow(predictors)) {
     if (length(frac_vote) == 0 || is.na(frac_vote)) {
 
     } else {
-    predictors$Hillary[i] = frac_vote
+      predictors$Hillary[i] = frac_vote
     }
   }
 }
 
-final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
-
-final_table$Hillary <- final_table$Hillary * 100 # convert to percent
+predictors$Hillary <- predictors$Hillary * 100 # convert to percent
 
 south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC', 'GA', 'AL', 'FL', 'MD', 'DC', 'DE')
 west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
 midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
 northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
 
-for (c in 1:nrow(final_table)) {
-  if (final_table[c,]$state_abbreviation %in% south) {
-      final_table[c,]$state_abbreviation = 'S'
-  } else if (final_table[c,]$state_abbreviation %in% west){
-      final_table[c,]$state_abbreviation = 'W'
-  } else if (final_table[c,]$state_abbreviation %in% midwest){
-      final_table[c,]$state_abbreviation = 'M'
-  } else if (final_table[c,]$state_abbreviation %in% northeast){
-      final_table[c,]$state_abbreviation = 'N'
+for (c in 1:nrow(predictors)) {
+  if (predictors[c,]$state_abbreviation %in% south) {
+      predictors[c,]$state_abbreviation = 'S'
+  } else if (predictors[c,]$state_abbreviation %in% west){
+      predictors[c,]$state_abbreviation = 'W'
+  } else if (predictors[c,]$state_abbreviation %in% midwest){
+      predictors[c,]$state_abbreviation = 'M'
+  } else if (predictors[c,]$state_abbreviation %in% northeast){
+      predictors[c,]$state_abbreviation = 'N'
   } else {
-      final_table = final_table[-c, ]
+      predictors = predictors[-c, ]
   }
 }
-final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
+predictors = predictors[predictors$state_abbreviation == 'S' | predictors$state_abbreviation == 'W' | predictors$state_abbreviation == 'M' | predictors$state_abbreviation == 'N',]
 
-final_table$state_abbreviation <- as.factor(final_table$state_abbreviation) #Convert categorical to factor.
-head(final_table)
+predictors$state_abbreviation <- as.factor(predictors$state_abbreviation) #Convert categorical to factor.
+head(predictors)
 ```
-Cleaned data to optimize quality of observations and analysis. First the data and results are read from their respective .csv files. The rows that do not have a state abbreviation are then removed.
-The first for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes. The DC variable is removed as it adds a new binary variable due to one-hot encoding and only has one respective row. The states are broke down into regions sinces reduces the dimensionality of the data. Without this modification, the full interaction model would have more coefficients than there exists data points (rows) in the dataframe. This is because of the one-hot encoding of our categorical variable (state). While this categorization does result in a loss of information, it does make future computations easier and allows for p-values to exist.
-
-**Final Table has been created**
-
-# Methods
-
+First the data and results are read from their respective .csv files. The rows that do not have a state abbreviation are then removed.
+The first for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes. 
+The states are broke down into regions sinces reduces the dimensionality of the data. 
+Without this modification, the full interaction model would have more coefficients than there exists data points (rows) in the dataframe. 
+This is because of the one-hot encoding of our categorical variable would have a predictor for each of the 50 states. 
+While this categorization does result in a loss of information, it does make future computations easier and allows for p-values to exist.
 
 ```{r, warning=FALSE}
-pruned_data = final_table[,-c(1:2)]
+pruned_data = predictors[,-c(1:2)] # don't want fips or county name
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
-head(pruned_data)
 ```
 
 ```{r}
@@ -170,6 +166,8 @@ corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
 ```
 
 Looking at the coorelation plot above, some variables seem to be highly correlated with one another. 
+
+# Methods
 
 ## Initial Model
 
@@ -223,7 +221,7 @@ length(coef(add_mod_back_aic))
 length(coef(add_mod_back_bic))
 ```
 
-* We compare the r{2} values from each of the models created so far
+* We compare the $R^2$ values from each of the models created so far
 * They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
 ```{r}
@@ -242,7 +240,8 @@ qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col 
 qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
 ```
 
-Check the AIC model assumptions
+Check the AIC model assumptions:
+
 * Scatter Plot: fitted values against residuals and find density of the plot to be less than normal
 * Plot Histogram: shows slight right skew of the AIC model
 * QQ-Plot: the small valleys, especially between the theoretical quantities of 1-2 show that there is a violation of normality.
@@ -262,14 +261,18 @@ hist(resid(add_mod_back_bic),
 qqnorm(resid(add_mod_back_bic), main = "Normal Q-Q Plot, add_mod_back_bic", col = "darkgrey")
 qqline(resid(add_mod_back_bic), col = "dodgerblue", lwd = 2)
 ```
-Check the BIC model assumptions
+
+Check the BIC model assumptions:
+
 * Residual Plot: fitted values against Residuals. Very similar to AIC model, few more outliers
 * Plot Histogram: slightly right skewed, just like AIC mdoel
 * QQ-Plot: model contains small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
+
 ```{r}
 anova(add_mod_back_aic, full_add_mod)
 anova(add_mod_back_bic, full_add_mod)
 ```
+
 * Anova compares the AIC and BIC models against the full additive model
 * The BIC model is the better of the smaller models as it has the higher F-Statistic and lower p-value
 
@@ -277,19 +280,19 @@ anova(add_mod_back_bic, full_add_mod)
 
 ```{r}
 full_int_mod = lm(Hillary ~ .^2, data=pruned_data)
+(full_int_num_parameters = length(coef(full_int_mod)))
 ```
-* Created an interactive model full_int_mod which sees Hillary as the response and all other independent variables as predictors
-* The resulting r{2} value of the interactive model is 0.5118
+
+We created a full interactive model, with `r full_int_num_parameters` parameters. That's a huge number, and given how the total number of observations in the dataset is around 3000, this model must be prone to overfitting. However, first, we want to try to reduce the number of parameters in our interaction model. Running AIC or BIC would take ages to complete, thus, we "hand-select" a new, smaller, interaction model:   
+
 ```{r}
-a = anova(full_int_mod)["Pr(>F)"]
-str_formula = paste(row.names(a)[which(a < 0.01)], collapse = " + ")
+p_vals = anova(full_int_mod)["Pr(>F)"]
+small_int_formula = paste(row.names(p_vals)[which(p_vals < 0.01)], collapse = " + ")
 
-small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data)
-
+small_int_mod = lm(as.formula(paste("Hillary", small_int_formula, sep = " ~ ")), data = pruned_data)
 ```
 
-* Used p-values less than threshold (0.01) to select valuable predictors
-* Hand selected valuable interactions. Original model is too big for AIC or BIC
+Here, we use p-values less than threshold (0.01) to select valuable predictors.
 
 ```{r}
 plot(fitted(small_int_mod), resid(small_int_mod), col = "grey", pch = 20,
@@ -307,47 +310,14 @@ qqnorm(resid(small_int_mod), main = "Normal Q-Q Plot, small_int_mod", col = "dar
 qqline(resid(small_int_mod), col = "dodgerblue", lwd = 2)
 ```
 
-Check the Interactive model assumptions
+Check the Interactive model assumptions:
+
 * Residuals Plot: at every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
 * Plot Histogram: the histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
-* Q-Q Plot: as the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
- 
-
-```{r}
-anova(full_int_mod, small_int_mod)
-```
-
-Analyze the difference between the large interactive model and the small interactive model
-* The F-Statistic is 1.5 with a p-value of 0.0038
-* We reject the null and choose the smaller model. This shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
-
-# Results
-```{r}
-test = names(coef(add_mod_back_bic))
-test = test[-4]
-test = test[-3]
-test = test[-2]
-test[1] = "state_abbreviation"
-str_formula_2 = paste(test, collapse = " + ")
-str_formula_2
-```
-
-```{r}
-im_infl = cooks.distance(initial_mod)
-initial_low = lm(Hillary ~ RHI125214, data = pruned_data, subset = im_infl <= 4 / length(im_infl))
-
-model_infl = cooks.distance(add_mod_back_bic)
-model_low = lm(as.formula(paste("Hillary", str_formula_2, sep = " ~ ")), data = pruned_data, subset = model_infl <= 4 / length(model_infl))
-
-nim_infl = cooks.distance(small_int_mod)
-new_int_low = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data = pruned_data, subset = nim_infl <= 4 / length(nim_infl))
-
-c(length(im_infl[im_infl > 4 / length(im_infl)]),
-                     length(model_infl[model_infl > 4 / length(model_infl)]),
-                     length(nim_infl[nim_infl > 4 / length(nim_infl)]))
-```
+* QQ Plot: as the QQ plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
 
 
+Now, let's try to compare the two interaction models. 
 ```{r}
 calc_loocv_rmse = function(model) {
   sqrt(mean((resid(model) / (1 - hatvalues(model))) ^ 2))
@@ -355,9 +325,45 @@ calc_loocv_rmse = function(model) {
 ```
 
 ```{r}
+anova(small_int_mod, full_int_mod)[1:6]
+(full_int_r2 = summary(full_int_mod)$r.squared)
+(small_int_r2 = summary(small_int_mod)$r.squared)
+```
+
+The low p-value from the ANOVA test suggests the 2 interaction models are different, and the $R^2$ values suggests the full interaction model is perferrable to the small one; however, the full interaction model contains `r full_int_num_parameters` predictors, and is severly prone to overfitting. Calculating the leave-one-out cross-validated RMSE:
+
+```{r}
+(full_int_loocv = calc_loocv_rmse(full_int_mod))
+(small_int_loocv = calc_loocv_rmse(small_int_mod))
+```
+
+This confirms the flaw in using the full interaction model. Because it severely overfits the data, we prefer using the small interaction model here. 
+
+
+# Results
+
+```{r}
+bic_coefs = names(coef(add_mod_back_bic))
+bic_coefs = bic_coefs[-c(2:4)]
+bic_coefs[1] = "state_abbreviation"
+bic_formula = paste(bic_coefs, collapse = " + ")
+```
+
+```{r}
+im_infl = cooks.distance(initial_mod)
+initial_low = lm(Hillary ~ RHI125214, data = pruned_data, subset = im_infl <= 4 / length(im_infl))
+
+model_infl = cooks.distance(add_mod_back_bic)
+model_low = lm(as.formula(paste("Hillary", bic_formula, sep = " ~ ")), data = pruned_data, subset = model_infl <= 4 / length(model_infl))
+
+nim_infl = cooks.distance(small_int_mod)
+new_int_low = lm(as.formula(paste("Hillary", small_int_formula, sep = " ~ ")), data = pruned_data, subset = nim_infl <= 4 / length(nim_infl))
+```
+
+```{r}
 
 table_df = data.frame(
-  "Model" = c("Initial Model", "Small Additive", "Small Interactive"),
+  "Model" = c("Initial Model", "Small Additive (BIC)", "Small Interactive"),
   "R^2" = c(summary(initial_mod)$r.squared,
             summary(add_mod_back_bic)$r.squared,
             summary(small_int_mod)$r.squared),
@@ -414,7 +420,6 @@ We hope that the progress we have made to predicting vote proportion based on co
 ```{r, eval = FALSE}
 #This code was meant to try and remove some of the states if they had less than a certain number of data points. We attempted to use it in order to correct the shapiro and bp tests but it did not make any difference.
 
-# final_table = final_table[final_table$state_abbreviation == 'S' | final_table$state_abbreviation == 'W' | final_table$state_abbreviation == 'M' | final_table$state_abbreviation == 'N',]
 states = unique(final_table$state_abbreviation)
 tot = 0
 for (x in states) {
