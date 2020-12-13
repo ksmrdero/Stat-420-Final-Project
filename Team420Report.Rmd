@@ -1,6 +1,6 @@
 ---
 title: 'Team 420 Final Project'
-author: "Ruben Verghese, Simer Singh, Gautam Ajjarapu, James Wei"
+author: "Ruben Verghese:rubenv2, Simer Singh:ssing36, Gautam Ajjarapu:gka2, James Wei:jamesw7"
 date: 'December 14, 2020'
 output:
   html_document:
@@ -147,7 +147,7 @@ for (c in 1:nrow(predictors)) {
 predictors = predictors[predictors$state_abbreviation == 'S' | predictors$state_abbreviation == 'W' | predictors$state_abbreviation == 'M' | predictors$state_abbreviation == 'N',]
 
 predictors$state_abbreviation <- as.factor(predictors$state_abbreviation) #Convert categorical to factor.
-head(predictors)
+#head(predictors)
 ```
 First the data and results are read from their respective .csv files. The rows that do not have a state abbreviation are then removed.
 The first for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes. 
