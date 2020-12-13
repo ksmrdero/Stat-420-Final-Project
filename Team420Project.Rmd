@@ -96,23 +96,20 @@ The dataset contains 2 separate csv files for county facts and primary results. 
 ```{r, warning = FALSE, message = FALSE}
 data = read.csv("county_facts.csv", stringsAsFactors = FALSE)
 results = read.csv("primary_results.csv", stringsAsFactors = FALSE)
-# Read in the data and results from their respective .csv files.
 predictors = data[data$state_abbreviation != "", ]
-# Remove rows that do not have a state abbreviation.
+
 for (i in 1:nrow(predictors)) { 
   predictors$area_name[i] = str_replace(predictors$area_name[i], " County", "")
   predictors$area_name[i] = str_replace(predictors$area_name[i], " Parish", "")
 }
-# Change some of the naming schemes in the predictor .csv file because their are mismatches in the naming conventions
-# between the two .csv files.
+
 for (i in 1:nrow(predictors)) {
   state = predictors$state_abbreviation[i]
   fips = predictors$fips[i]
   frac_vote = results[results$state_abbreviation == state & results$fips == fips & results$candidate == "Hillary Clinton",]$fraction_votes
-  #print(frac_vote)
+
   if (length(frac_vote) == 0 || is.na(frac_vote)) {
-    #print(state)
-    #print(fips)
+
   } else {
     predictors$Hillary[i] = frac_vote
   }
@@ -120,16 +117,14 @@ for (i in 1:nrow(predictors)) {
   frac_vote = results[results$county == county & results$candidate == "Hillary Clinton",]$fraction_votes
   if (predictors$Hillary[i] == 0) {
     if (length(frac_vote) == 0 || is.na(frac_vote)) {
-    #print(county)
+
     } else {
     predictors$Hillary[i] = frac_vote
     }
   }
 }
-# This for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes.
 
 final_table = predictors[predictors$Hillary != 0 | predictors$state_abbreviation != "DC", ]
-# Remove DC because it adds a new binary variable due to one-hot encoding and only has one respective row. Kind of a # # waste.
 
 final_table$Hillary <- final_table$Hillary * 100 # convert to percent
 
@@ -137,10 +132,6 @@ south = c('TX', 'OK', 'LA', 'AR', 'MS', 'AL', 'TN', 'KY', 'WV', 'VA', 'NC', 'SC'
 west = c('CA', 'OR', 'WA', 'ID', 'MT', 'NV', 'AZ', 'UT', 'CO', 'NM', 'WY', 'AK')
 midwest = c('ND', 'SD', 'NE', 'KS', 'MN', 'IA', 'MO', 'WI', 'IL', 'IN', 'MI', 'OH')
 northeast = c('PA', 'NJ', 'CT', 'RI', 'MA', 'VT', 'NY', 'NH', 'ME')
-# Here we break down the states into regions because this way we can reduce the dimensionality of the data. Without
-# This modification, the full interaction model would have more coefficients than we have data points (rows) in our 
-# dataframe. This is because of the one-hot encoding of our categorical variable (state). While this categorization
-# Does result in a loss of information, it does make future computations easier and allows for p-values to exist, #etc.
 
 for (c in 1:nrow(final_table)) {
   if (final_table[c,]$state_abbreviation %in% south) {
@@ -160,7 +151,8 @@ final_table = final_table[final_table$state_abbreviation == 'S' | final_table$st
 final_table$state_abbreviation <- as.factor(final_table$state_abbreviation) #Convert categorical to factor.
 head(final_table)
 ```
-
+Cleaned data to optimize quality of observations and analysis. First the data and results are read from their respective .csv files. The rows that do not have a state abbreviation are then removed.
+The first for loop attaches a new column to the end of the predictors .csv file with the proportion of Hillary Votes. The DC variable is removed as it adds a new binary variable due to one-hot encoding and only has one respective row. The states are broke down into regions sinces reduces the dimensionality of the data. Without this modification, the full interaction model would have more coefficients than there exists data points (rows) in the dataframe. This is because of the one-hot encoding of our categorical variable (state). While this categorization does result in a loss of information, it does make future computations easier and allows for p-values to exist.
 
 **Final Table has been created**
 
@@ -172,9 +164,6 @@ pruned_data = final_table[,-c(1:2)]
 pruned_data = pruned_data[pruned_data$Hillary != 0,]
 head(pruned_data)
 ```
-
-* Removed unnecessary categorical variables such as location
-* Cleaned data
 
 ```{r}
 corrplot(cor(pruned_data[,-1]), tl.cex = 0.5)
@@ -218,10 +207,7 @@ plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 
 ```
-
-* The plot of the large additive model indicates that no major assumptions have been violates
 * The model is a log model as we wanted to observe the exponentiated regression coefficients
-
 
 ```{r}
 summary(full_add_mod)$r.squared
@@ -251,13 +237,9 @@ qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col 
 qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
 ```
 Check the AIC model assumptions
-
-* Scatter Plot
- + Fitted values against Residuals and find density of the plot to be mostly normal
-* Plot Histogram
- + Shows high normality of the AIC model
-* QQ-Plot
- + Shows a low average distance between error and regression line. However the small valleys, especially between the theoretical quantities of 1-2 show that there is a violation of normality.
+* Scatter Plot: fitted values against residuals and find density of the plot to be less than normal
+* Plot Histogram: shows slight right skew of the AIC model
+* QQ-Plot: the small valleys, especially between the theoretical quantities of 1-2 show that there is a violation of normality.
 
 
 ```{r}
@@ -275,19 +257,15 @@ qqnorm(resid(add_mod_back_bic), main = "Normal Q-Q Plot, add_mod_back_bic", col 
 qqline(resid(add_mod_back_bic), col = "dodgerblue", lwd = 2)
 ```
 Check the BIC model assumptions
-* Residual Plot
- + Fitted values against Residuals. Very similar to AIC model, few more outliers
-* Plot Histogram
- + High normaility, slightly right skewed.
-* QQ-Plot
- + Residuals, generally, are relatively close to regression line, with small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
+* Residual Plot: fitted values against Residuals. Very similar to AIC model, few more outliers
+* Plot Histogram: slightly right skewed, just like AIC mdoel
+* QQ-Plot: model contains small valleys. Similar to the AIC model, these valleys suggest lack of normality at points.
 ```{r}
 anova(add_mod_back_aic, full_add_mod)
 anova(add_mod_back_bic, full_add_mod)
 ```
 * Anova compares the AIC and BIC models against the full additive model
-* We choose the smaller model because of the higher p-value and therefore reject the null hypothesis
-
+* The BIC model is the better of the smaller models as it has the higher F-Statistic and lower p-value
 
 ## Interaction Models
 
@@ -305,8 +283,7 @@ small_int_mod = lm(as.formula(paste("Hillary", str_formula, sep = " ~ ")), data 
 ```
 
 * Used p-values less than threshold (0.01) to select valuable predictors
-* Hand selected valuable interactions
- +Original model is too big for AIC or BIC
+* Hand selected valuable interactions. Original model is too big for AIC or BIC
 
 ```{r}
 plot(fitted(small_int_mod), resid(small_int_mod), col = "grey", pch = 20,
@@ -324,12 +301,9 @@ qqnorm(resid(small_int_mod), main = "Normal Q-Q Plot, small_int_mod", col = "dar
 qqline(resid(small_int_mod), col = "dodgerblue", lwd = 2)
 ```
 Check the Interactive model assumptions
-- Residuals Plot
- + At every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
-- Plot Histogram
- + The histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
-- Q-Q Plot
- + As the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
+* Residuals Plot: at every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
+* Plot Histogram: the histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
+* Q-Q Plot: as the Q-Q plot nearly follows a straight line, this suggests the data does in fact come from a normal distribution.  
  
 
 ```{r}
@@ -338,8 +312,7 @@ anova(full_int_mod, small_int_mod)
 
 Analyze the difference between the large interactive model and the small interactive model
 * The F-Statistic is 1.5 with a p-value of 0.0038
-* We reject the null and choose the smaller model
- + Shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
+* We reject the null and choose the smaller model. This shows us that less interactions with more significant independent predictors will yield a higher r{2} value and more normality
 
 # Results
 ```{r}
