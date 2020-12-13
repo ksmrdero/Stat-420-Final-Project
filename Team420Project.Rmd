@@ -23,7 +23,7 @@ library(stringr)
 
 The 2016 Primaries were influenced by many factors and the race between Bernie and Hillary across the United States was close. There are many factors that may have determined whether Hillary or Bernie won each county in each state. We tried to find a statistical model that could, given statistics about a specific county in a specific state, make a prediction for the fraction of Democratic votes Hillary would win. This fulfills the requirement for a continuous response variable because the output is a proportion. By being able to accurately predict the proportion of one democratic candidate given statistics about a county, we can make predictions about any future races and maybe see if similar models can be built.
 
-Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of R^2 and RMSE.
+Some methods we used in this project are Data Cleaning/Formatting, Variable Selection, ANOVA, Multiple Linear Regression, Interaction, Dummy Variables, Residual Diagnostics, Outlier Diagnostics, Transformations, and Stepwise Model Selection. We predict that one of our interaction models will be the best because it includes all of the two-way interactions, which may help with such a high dimensional data set. We also predict that our smaller interaction model will outperform our other models in terms of R^2 and RMSE.
 
 ## Data Source
 
@@ -177,6 +177,7 @@ Looking at the coorelation plot above, some variables seem to be highly correlat
 initial_mod = lm(Hillary ~ RHI125214, data=pruned_data)
 initial_mod
 ```
+
 * Constructed an initial model that represents core of data
 
 ## Additive Models
@@ -186,6 +187,7 @@ full_add_mod = lm(Hillary ~ ., data=pruned_data)
 bptest(full_add_mod)
 shapiro.test(resid(full_add_mod))
 ```
+
 * Built a linear additive model with Hillary as the response and every variable as the predictor
 * Checked initial assumptions with  Breusch-Pagan test for heteroscedasticity and found an extremely low p-value
 * The high W value given from the Shapiro-Wilk test suggests a high level of normality
@@ -198,6 +200,7 @@ add_mod_back_aic = step(full_add_mod, direction="backward", k=2, trace=0)
 add_mod_back_bic = step(full_add_mod, direction="backward", k=log(n), trace=0)
 
 ```
+
 * The AIC and BIC models are created to remove unvaluable predictors 
 
 ```{r}
@@ -207,6 +210,7 @@ plot(fitted(log_model), resid(log_model), col = "grey", pch = 20,
      xlab = "Fitted", ylab = "Residuals", main = "Data from Big Mod")
 
 ```
+
 * The model is a log model as we wanted to observe the exponentiated regression coefficients
 
 ```{r}
@@ -218,6 +222,7 @@ length(coef(full_add_mod))
 length(coef(add_mod_back_aic))
 length(coef(add_mod_back_bic))
 ```
+
 * We compare the r{2} values from each of the models created so far
 * They are all relatively similar, with the AIC and BIC models showing slightly lower values
 
@@ -236,6 +241,7 @@ hist(resid(add_mod_back_aic),
 qqnorm(resid(add_mod_back_aic), main = "Normal Q-Q Plot, add_mod_back_aic", col = "darkgrey")
 qqline(resid(add_mod_back_aic), col = "dodgerblue", lwd = 2)
 ```
+
 Check the AIC model assumptions
 * Scatter Plot: fitted values against residuals and find density of the plot to be less than normal
 * Plot Histogram: shows slight right skew of the AIC model
@@ -300,6 +306,7 @@ hist(resid(small_int_mod),
 qqnorm(resid(small_int_mod), main = "Normal Q-Q Plot, small_int_mod", col = "darkgrey")
 qqline(resid(small_int_mod), col = "dodgerblue", lwd = 2)
 ```
+
 Check the Interactive model assumptions
 * Residuals Plot: at every fitted value, the mean of the residuals is roughly 0, so linearity is satisifed. However, the constant variance assumption is invalid. 
 * Plot Histogram: the histogram of residuals is rougly follows a normal distribution, leading to the normality assumption to be valid.
